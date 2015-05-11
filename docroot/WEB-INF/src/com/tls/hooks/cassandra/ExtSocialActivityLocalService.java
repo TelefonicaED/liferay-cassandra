@@ -112,42 +112,36 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	@Override
 	public SocialActivity addSocialActivity(SocialActivity socialActivity)
 			throws SystemException {
-		// TODO Auto-generated method stub
 		System.out.println("sa");
 		return super.addSocialActivity(socialActivity);
 		
 	}
 	@Override
 	public SocialActivity createSocialActivity(long activityId) {
-		// TODO Auto-generated method stub
 		System.out.println("createSocialActivity");
 		return super.createSocialActivity(activityId);
 	}
 	@Override
 	public SocialActivity deleteSocialActivity(long activityId)
 			throws PortalException, SystemException {
-		// TODO Auto-generated method stub
 		System.out.println("deleteSocialActivity");
 		return super.deleteSocialActivity(activityId);
 	}
 	@Override
 	public SocialActivity deleteSocialActivity(SocialActivity socialActivity)
 			throws SystemException {
-		// TODO Auto-generated method stub
 		System.out.println("deleteSocialActivity");
 		return super.deleteSocialActivity(socialActivity);
 	}
 	@Override
 	public SocialActivity fetchSocialActivity(long activityId)
 			throws SystemException {
-		// TODO Auto-generated method stub
 		System.out.println("fetchSocialActivity");
 		return super.fetchSocialActivity(activityId);
 	}
 	@Override
 	public SocialActivity getSocialActivity(long activityId)
 			throws PortalException, SystemException {
-		// TODO Auto-generated method stub
 		System.out.println("getSocialActivity");
 		return this.getActivity(activityId);
 	}
@@ -312,12 +306,10 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 						mirrorActivity.getExtraData(),
 						mirrorActivity.getReceiverUserId()
 						));
-				//socialActivityPersistence.update(mirrorActivity, false);
 			}
 		}
 
 		SocialActivityCounterLocalServiceUtil.addActivityCounters(activity);
-		//super.addActivity(activity, mirrorActivity);
 	}
 	@Override
 	public void addUniqueActivity(long userId, long groupId, Date createDate,
