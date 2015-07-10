@@ -3,6 +3,8 @@ package com.tls.hooks.cassandra;
 import java.util.Date;
 import java.util.List;
 
+import org.omg.CORBA.portable.ValueOutputStream;
+
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
@@ -47,9 +49,12 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
   	PreparedStatement insertStatement;
 	PreparedStatement getGroupActivitiesStatement;
 	PreparedStatement getActivityStatement;
-	PreparedStatement getActivitiesStament;
-	PreparedStatement getGroupUsersActivitiesStament;
-	PreparedStatement getGroupUsersActivitiesCountStament;	
+	PreparedStatement getActivitiesStatement;
+	PreparedStatement getGroupUsersActivitiesStatement;
+	PreparedStatement getGroupUsersActivitiesCountStatement;	
+	PreparedStatement getMirrorActivityStatement;
+	PreparedStatement deleteActivityStatement;
+	
 	
       	
 	
@@ -137,18 +142,22 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 				      "select * from liferay.socialactivity where groupid= ? limit ?;");
 			 getActivityStatement = session.prepare(
 					      "select * from liferay.socialactivity where activityid= ?;");
-			 getActivitiesStament = session.prepare(
+			 getActivitiesStatement = session.prepare(
 				      "select * from liferay.socialactivity where userId= ? limit ?;");
-			 getGroupUsersActivitiesStament = session.prepare(
+			 getGroupUsersActivitiesStatement = session.prepare(
 				      "select * from liferay.socialactivity where userId= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
-			 getGroupUsersActivitiesCountStament = session.prepare(
-				      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
+			 getGroupUsersActivitiesCountStatement = session.prepare(
+				      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId=0   ALLOW FILTERING;");
+			 
+			 getMirrorActivityStatement = session.prepare(
+				      "select * from liferay.socialactivity where mirrorActivityId= ?;");
 			 
 			 //DELETE
-			 
+			 deleteActivityStatement = session.prepare(
+				      "delete  from liferay.socialactivity where ActivityId= ?;");
 		      
 		  }
-	     
+	      
 
 		   
 	  }
@@ -221,22 +230,12 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 			long receiverUserId) throws PortalException, SystemException {
 		System.out.println("addActivity1");
 		
-		
+	 	
 		
 //CASSANDRA
-		
-		int cont = 0;
-		List<User> users =UserLocalServiceUtil.getGroupUsers(groupId);
-		BoundStatement boundStatement = new BoundStatement(getGroupUsersActivitiesCountStament);
-		if (users.size()>0){
-			for(int i=1;i<users.size();i++){
-					ResultSet results=session.execute(boundStatement.bind(users.get(i).getUserId()));
-					List<Row> rows=results.all();
-					if(rows.size()>0&&rows.size()>=0){
-						cont = cont + rows.size(); 
-					}
-			}		
-		}
+
+	
+	
 		
 		if (ImportExportThreadLocal.isImportInProcess()) {
 			return;
@@ -396,14 +395,14 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	@Override
 	public void deleteActivities(AssetEntry assetEntry) throws PortalException,
 			SystemException {
-		System.out.println("deleteActivities");
-		
+		System.out.println("deleteActivities1");
+		assetEntry.getClassNameId();assetEntry.getClassPK()
 		super.deleteActivities(assetEntry);
 	}
 	@Override
 	public void deleteActivities(String className, long classPK)
 			throws SystemException {
-		System.out.println("deleteActivities");
+		System.out.println("deleteActivities2");
 		
 		super.deleteActivities(className, classPK);
 	}
@@ -412,7 +411,34 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 			SystemException {
 		System.out.println("deleteActivity");
 		
-		super.deleteActivity(activityId);
+		//Delete mirrorActivity
+		BoundStatement boundStatement = new BoundStatement(getMirrorActivityStatement);
+		ResultSet results=session.execute(boundStatement.bind(activityId));
+		if(results!=null ){
+			List<Row> rowlist=results.all();
+			if(rowlist.size()>0){
+				Row row=rowlist.get(0);
+				SocialActivity socialActivity = getSocialActivityFromRow(row);
+				boundStatement = new BoundStatement(deleteActivityStatement);
+				session.execute(boundStatement.bind(socialActivity.getActivityId()));
+			}
+		}		
+		
+		//Delete activityId
+		boundStatement = new BoundStatement(getActivityStatement);
+		results=session.execute(boundStatement.bind(activityId));
+		if(results!=null ){
+			List<Row> rowlist=results.all();
+			if(rowlist.size()>0){
+				Row row=rowlist.get(0);
+				SocialActivity socialActivity = getSocialActivityFromRow(row);
+				boundStatement = new BoundStatement(deleteActivityStatement);
+				session.execute(boundStatement.bind(socialActivity.getActivityId()));
+			}
+		}		
+
+		
+	//	super.deleteActivity(activityId);
 	}
 	@Override
 	public void deleteActivity(SocialActivity activity) throws SystemException {
@@ -562,7 +588,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 */				
 		List<User> users =UserLocalServiceUtil.getGroupUsers(groupId);
 		List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
-		BoundStatement boundStatement = new BoundStatement(getGroupUsersActivitiesStament);
+		BoundStatement boundStatement = new BoundStatement(getGroupUsersActivitiesStatement);
 		for(int i=start;i<users.size();i++){
 				boundStatement.setFetchSize(end);		
 				ResultSet results=session.execute(boundStatement.bind(users.get(i).getUserId(),end));
@@ -597,7 +623,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		int cont = 0;
 		List<User> users =UserLocalServiceUtil.getGroupUsers(groupId);
 		List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
-		BoundStatement boundStatement = new BoundStatement(getGroupUsersActivitiesCountStament);
+		BoundStatement boundStatement = new BoundStatement(getGroupUsersActivitiesCountStatement);
 		for(int i=0;i<users.size();i++){
 				ResultSet results=session.execute(boundStatement.bind(users.get(i).getUserId()));
 				List<Row> rows=results.all();
@@ -611,7 +637,20 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public SocialActivity getMirrorActivity(long mirrorActivityId)
 			throws PortalException, SystemException {
 		System.out.println("getMirrorActivity");
-		return super.getMirrorActivity(mirrorActivityId);
+		
+			BoundStatement boundStatement = new BoundStatement(getMirrorActivityStatement);
+			ResultSet results=session.execute(boundStatement.bind(mirrorActivityId));
+			if(results!=null ){
+				List<Row> rowlist=results.all();
+				if(rowlist.size()>0){
+					Row row=rowlist.get(0);
+					SocialActivity socialActivity = getSocialActivityFromRow(row);
+					return socialActivity;
+				}
+			}
+			return null;
+		
+		//return super.getMirrorActivity(mirrorActivityId);
 	}
 	@Override
 	public List<SocialActivity> getOrganizationActivities(long organizationId,
@@ -671,7 +710,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		System.out.println("getUserActivities");
 		
 		List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
-		BoundStatement boundStatement = new BoundStatement(getActivitiesStament);
+		BoundStatement boundStatement = new BoundStatement(getActivitiesStatement);
 		boundStatement.setFetchSize(end);
 		ResultSet results=session.execute(boundStatement.bind(userId,end));
 		List<Row> rows=results.all();
