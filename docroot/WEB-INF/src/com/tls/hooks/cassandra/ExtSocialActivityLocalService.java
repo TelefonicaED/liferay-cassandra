@@ -39,7 +39,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	 */
 	private static Cluster cluster;
 	private  Session session;
-	static String node="10.102.227.51";
+	static String node="127.0.0.1";
 	PreparedStatement insertStatement;
 	PreparedStatement getGroupActivitiesStatement;
 	PreparedStatement getActivityStatement;
@@ -63,12 +63,31 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		                  "type_ int," +
 		                  "extraData varchar," +
 		                  "receiverUserId bigint," +
-		                  "PRIMARY KEY ( (activityId) , createDate )" + 
+		                  "PRIMARY KEY (activityId)" + 
 		                  ");");
 		      //create index sagi on socialactivity (groupid);
 		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi on liferay.socialactivity (groupid);"
+			            "CREATE INDEX IF NOT EXISTS sagi1 on liferay.socialactivity (classnameid);"
 		      );
+		      session.execute(
+			            "CREATE INDEX IF NOT EXISTS sagi2 on liferay.socialactivity (classpk);"
+		      );
+		      session.execute(
+			            "CREATE INDEX IF NOT EXISTS sagi3 on liferay.socialactivity (groupid);"
+		      );
+		      session.execute(
+			            "CREATE INDEX IF NOT EXISTS sagi4 on liferay.socialactivity (mirrorActivityId);"
+		      );
+		      session.execute(
+			            "CREATE INDEX IF NOT EXISTS sagi5 on liferay.socialactivity (receiverUserId);"
+		      );
+		      session.execute(
+			            "CREATE INDEX IF NOT EXISTS sagi5 on liferay.socialactivity (userId);"
+		      );
+		      
+		      
+		      
+		      
 		      
 		   }
 	   public void connect() 
