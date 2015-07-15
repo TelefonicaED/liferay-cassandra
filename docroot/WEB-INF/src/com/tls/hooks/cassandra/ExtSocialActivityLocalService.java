@@ -18,13 +18,23 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.lar.ImportExportThreadLocal;
 import com.liferay.portal.model.Group;
+import com.liferay.portal.model.GroupModel;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
+import com.liferay.portal.service.GroupService;
+import com.liferay.portal.service.GroupServiceUtil;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
+import com.liferay.portal.service.OrganizationLocalServiceUtil;
 import com.liferay.portal.service.UserGroupLocalServiceUtil;
+import com.liferay.portal.service.UserGroupRoleServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
+import com.liferay.portal.service.UserServiceUtil;
+import com.liferay.portal.service.permission.GroupPermissionUtil;
+import com.liferay.portal.service.persistence.GroupFinderUtil;
+import com.liferay.portal.service.persistence.OrganizationUtil;
+import com.liferay.portal.service.persistence.UserGroupFinderUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
@@ -60,6 +70,12 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	PreparedStatement getActivitiesreceiverUserIdStatement;
 	PreparedStatement getActivitiesClassNameIdStatement;	
 	PreparedStatement getActivitiesClassNameIdCountStatement;	
+	PreparedStatement getActivitiesCountStatement;
+	PreparedStatement getOrganizationUsersActivitiesStatement;
+	PreparedStatement getOrganizationUsersActivitiesCountStatement;
+	
+	PreparedStatement getOrganizationActivitiesStatement;
+	PreparedStatement getOrganizationActivitiesCountStatement;
 	
 	
 	PreparedStatement getGroupUsersActivitiesStatement;
@@ -156,12 +172,17 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		  	 getGroupActivitiesStatement = session.prepare(
 				      "select * from liferay.socialactivity where groupid= ? limit ?;");
 			 getActivityStatement = session.prepare(
-					      "select * from liferay.socialactivity where activityid= ?;");
+					   "select * from liferay.socialactivity where activityid= ?;");
 			 getActivitiesStatement = session.prepare(
 				      "select * from liferay.socialactivity where userId= ?;");
-			 
 			 getActivitiesLimitStatement = session.prepare(
 				      "select * from liferay.socialactivity where userId= ? limit ?;");
+			 getOrganizationUsersActivitiesStatement = session.prepare(
+				      "select * from liferay.socialactivity where userId= ? and mirrorActivityId =0   limit ?  ALLOW FILTERING ;");
+			 getOrganizationUsersActivitiesCountStatement = session.prepare(
+				      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId = 0 ALLOW FILTERING ;");
+			 getActivitiesCountStatement = session.prepare(
+				      "select count(*) from liferay.socialactivity where userId= ?;");			 
 			 getActivitiesClassNameClasspkStatament = session.prepare(
 				      "select * from liferay.socialactivity where classNameId= ? and classPK = ? ALLOW FILTERING;");
 			 getActivitiesreceiverUserIdStatement = session.prepare(
@@ -183,6 +204,11 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 			 
 			 getMirrorActivityStatement = session.prepare(
 				      "select * from liferay.socialactivity where mirrorActivityId= ?;");
+			 
+			 getOrganizationActivitiesStatement = session.prepare(
+				      "select * from liferay.socialactivity where groupid= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
+			 getOrganizationActivitiesCountStatement = session.prepare(
+				      "select count(*) from liferay.socialactivity where groupid= ? and mirrorActivityId=0    ALLOW FILTERING;");
 			  
 			 //DELETE
 			 deleteActivityStatement = session.prepare(
@@ -208,53 +234,62 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	@Override
 	public SocialActivity createSocialActivity(long activityId) {
 		System.out.println("createSocialActivity");
+
 		return super.createSocialActivity(activityId);
 	}
 	@Override
 	public SocialActivity deleteSocialActivity(long activityId)
 			throws PortalException, SystemException {
 		System.out.println("deleteSocialActivity");
+		System.out.println("NO IMPLEMENTADO");
 		return super.deleteSocialActivity(activityId);
 	}
 	@Override
 	public SocialActivity deleteSocialActivity(SocialActivity socialActivity)
 			throws SystemException {
 		System.out.println("deleteSocialActivity");
+		System.out.println("NO IMPLEMENTADO");
 		return super.deleteSocialActivity(socialActivity);
 	}
 	@Override
 	public SocialActivity fetchSocialActivity(long activityId)
 			throws SystemException {
 		System.out.println("fetchSocialActivity");
+		System.out.println("NO IMPLEMENTADO");
 		return super.fetchSocialActivity(activityId);
 	}
 	@Override
 	public SocialActivity getSocialActivity(long activityId)
 			throws PortalException, SystemException {
 		System.out.println("getSocialActivity");
+		System.out.println("NO IMPLEMENTADO");
 		return this.getActivity(activityId);
 	}
 	@Override
 	public List<SocialActivity> getSocialActivities(int start, int end)
 			throws SystemException {
 		System.out.println("getSocialActivities");
+		System.out.println("NO IMPLEMENTADO");
 		return super.getSocialActivities(start, end);
 	}
 	@Override
 	public int getSocialActivitiesCount() throws SystemException {
 		System.out.println("getSocialActivitiesCount");
+		System.out.println("NO IMPLEMENTADO");
 		return super.getSocialActivitiesCount();
 	}
 	@Override
 	public SocialActivity updateSocialActivity(SocialActivity socialActivity)
 			throws SystemException {
 		System.out.println("updateSocialActivity");
+		System.out.println("NO IMPLEMENTADO");
 		return super.updateSocialActivity(socialActivity);
 	}
 	@Override
 	public SocialActivity updateSocialActivity(SocialActivity socialActivity,
 			boolean merge) throws SystemException {
 		System.out.println("updateSocialActivity");
+		System.out.println("NO IMPLEMENTADO");
 		return super.updateSocialActivity(socialActivity, merge);
 	}
 	@Override
@@ -266,8 +301,14 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	 	
 		
 //CASSANDRA
+
+		
+		
+		
 	
-	
+		
+		
+
 		
 		if (ImportExportThreadLocal.isImportInProcess()) {
 			return;
@@ -603,7 +644,9 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		BoundStatement boundStatement = new BoundStatement(getActivitiesClassNameIdCountStatement);
 		ResultSet results=session.execute(boundStatement.bind(classNameId));
 		List<Row> rows=results.all();
-		return rows.size();
+		int cont =0;
+		cont = (int) rows.get(0).getLong(0);
+		return cont; 
 		
 	//	return super.getActivitiesCount(classNameId);
 	}
@@ -615,7 +658,11 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		BoundStatement boundStatement = new BoundStatement(getActivitiesMirrorActivityIdClassNameIdClasspkCountStatament);
 		ResultSet results=session.execute(boundStatement.bind(classNameId));
 		List<Row> rows=results.all();
-		return rows.size();		
+		int cont =0;
+		cont = (int) rows.get(0).getLong(0);
+		return cont; 
+		
+		
 	}
 
 	@Override
@@ -626,7 +673,9 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		BoundStatement boundStatement = new BoundStatement(getActivitiesMirrorActivityIdClassNameIdClasspkCountStatament);
 		ResultSet results=session.execute(boundStatement.bind(mirrorActivityId, ClassNameLocalServiceUtil.getClassName(className).getClassNameId(),classPK));
 		List<Row> rows=results.all();
-		return rows.size();		
+		int cont =0;
+		cont = (int) rows.get(0).getLong(0);
+		return cont; 
 	}
 	
 	@Override
@@ -637,7 +686,9 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		BoundStatement boundStatement = new BoundStatement(getActivitiesClassNameIdCountStatement);
 		ResultSet results=session.execute(boundStatement.bind(ClassNameLocalServiceUtil.getClassName(className).getClassNameId()));
 		List<Row> rows=results.all();
-		return rows.size();		
+		int cont =0;
+		cont = (int) rows.get(0).getLong(0);
+		return cont; 	
 	}
 	@Override
 	public SocialActivity getActivity(long activityId) throws PortalException,
@@ -790,25 +841,133 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public List<SocialActivity> getOrganizationActivities(long organizationId,
 			int start, int end) throws SystemException {
 		System.out.println("getOrganizationActivities");
-		return super.getOrganizationActivities(organizationId, start, end);
+		
+		
+		/*
+		 * 			SELECT
+						{SocialActivity.*}
+					FROM
+						SocialActivity
+					INNER JOIN
+						Group_ ON
+							(Group_.groupId = SocialActivity.groupId)
+					INNER JOIN
+						Organization_ ON
+							(Organization_.organizationId = Group_.classPK)
+					WHERE
+						(SocialActivity.mirrorActivityId = 0) AND
+						(Organization_.organizationId = ?)
+					ORDER BY
+						SocialActivity.createDate DESC		
+		 */
+		
+
+   		List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
+   		BoundStatement boundStatement = new BoundStatement(getOrganizationActivitiesStatement);
+		boundStatement.setFetchSize(end);		
+		ResultSet results = null;
+		try {
+			results = session.execute(boundStatement.bind(OrganizationLocalServiceUtil.getOrganization(organizationId).getGroupId(),end));
+		} catch (PortalException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+   				List<Row> rows=results.all();
+   				if(rows.size()>0&&rows.size()>=start){
+   					for(int j=start;j<rows.size();j++){
+   						Row row=rows.get(j);
+   						SocialActivity socialActivity = getSocialActivityFromRow(row);
+   						groupActivities.add(socialActivity);
+   					}
+   		}			
+   		
+   		return groupActivities;
+	//	return super.getOrganizationActivities(organizationId, start, end);
 	}
 	@Override
 	public int getOrganizationActivitiesCount(long organizationId)
 			throws SystemException {
 		System.out.println("getOrganizationActivitiesCount");
-		return super.getOrganizationActivitiesCount(organizationId);
+		
+		
+
+       int cont =0;
+   		BoundStatement boundStatement = new BoundStatement(getOrganizationActivitiesCountStatement);
+		ResultSet results = null;
+		try {
+			results = session.execute(boundStatement.bind(OrganizationLocalServiceUtil.getOrganization(organizationId).getGroupId()));
+		} catch (PortalException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+   				List<Row> rows=results.all();
+   				if(rows.size()>0 && rows.size()>=1){
+   					cont = (int)  rows.get(0).getLong(0);	   					
+   		}			
+   		
+   		return cont;		
+		
+		
+		//return super.getOrganizationActivitiesCount(organizationId);
 	}
 	@Override
 	public List<SocialActivity> getOrganizationUsersActivities(
 			long organizationId, int start, int end) throws SystemException {
 		System.out.println("getOrganizationUsersActivities");
-		return super.getOrganizationUsersActivities(organizationId, start, end);
+/*
+ * 			SELECT
+				{SocialActivity.*}
+			FROM
+				SocialActivity
+			INNER JOIN
+				Users_Orgs ON
+					(Users_Orgs.userId = SocialActivity.userId)
+			WHERE
+				(SocialActivity.mirrorActivityId = 0) AND
+				(Users_Orgs.organizationId = ?)
+			ORDER BY
+				SocialActivity.createDate DESC		
+ */
+		
+		
+		List<User> users = UserLocalServiceUtil.getOrganizationUsers(organizationId);
+		List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
+		BoundStatement boundStatement = new BoundStatement(getOrganizationUsersActivitiesStatement);
+		for(int i=start;i<users.size();i++){
+				boundStatement.setFetchSize(end);		
+				ResultSet results=session.execute(boundStatement.bind(users.get(i).getUserId(),end));
+				List<Row> rows=results.all();
+				if(rows.size()>0&&rows.size()>=start){
+					for(int j=start;i<rows.size();i++){
+						Row row=rows.get(i);
+						SocialActivity socialActivity = getSocialActivityFromRow(row);
+						groupActivities.add(socialActivity);
+					}
+				}
+		}			
+		
+		return groupActivities;
+		
+		//return super.getOrganizationUsersActivities(organizationId, start, end);
 	}
 	@Override
 	public int getOrganizationUsersActivitiesCount(long organizationId)
 			throws SystemException {
 		System.out.println("getOrganizationUsersActivitiesCount");
-		return super.getOrganizationUsersActivitiesCount(organizationId);
+		
+        int cont =0;		
+		List<User> users = UserLocalServiceUtil.getOrganizationUsers(organizationId);
+		BoundStatement boundStatement = new BoundStatement(getOrganizationUsersActivitiesCountStatement);
+		for(int i=0;i<users.size();i++){
+				ResultSet results=session.execute(boundStatement.bind(users.get(i).getUserId()));
+				List<Row> rows=results.all();
+				cont = cont + (int) rows.get(0).getLong(0);				
+		}			
+		
+		return cont;
+		
+		
+		//return super.getOrganizationUsersActivitiesCount(organizationId);
 	}
 	
 /******RELACTION******************************************************************************************/	
@@ -862,42 +1021,105 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public int getUserActivitiesCount(long userId) throws SystemException {
 		System.out.println("getUserActivitiesCount");
 		
-		return super.getUserActivitiesCount(userId);
+		
+		BoundStatement boundStatement = new BoundStatement(getActivitiesCountStatement);
+		ResultSet results=session.execute(boundStatement.bind(userId));
+		List<Row> rows=results.all();
+		int cont =0;
+		cont = (int) rows.get(0).getLong(0);
+		return cont; 
+		
 	}
 	@Override
 	public List<SocialActivity> getUserGroupsActivities(long userId, int start,
 			int end) throws SystemException {
 		System.out.println("getUserGroupsActivities");
+		System.out.println("NO IMPLEMENTADO");
+		
+	//	UserLocalServiceUtil.get
+		
+/*
+ * 		SELECT
+				{SocialActivity.*}
+			FROM
+				SocialActivity
+			WHERE
+				(
+					groupId IN (
+						SELECT
+							groupId
+						FROM
+							Users_Groups
+						WHERE
+							userId = ?
+					)
+				) AND
+				(mirrorActivityId = 0)
+			ORDER BY
+				createDate DESC
+		]]>		
+ */
 		
 		return super.getUserGroupsActivities(userId, start, end);
 	}
 	@Override
 	public int getUserGroupsActivitiesCount(long userId) throws SystemException {
 		System.out.println("getUserGroupsActivitiesCount");
+		System.out.println("NO IMPLEMENTADO");		
 		return super.getUserGroupsActivitiesCount(userId);
 	}
 	@Override
 	public List<SocialActivity> getUserGroupsAndOrganizationsActivities(
 			long userId, int start, int end) throws SystemException {
 		System.out.println("getUserGroupsAndOrganizationsActivities");
+		System.out.println("NO IMPLEMENTADO");
 		return super.getUserGroupsAndOrganizationsActivities(userId, start, end);
 	}
 	@Override
 	public int getUserGroupsAndOrganizationsActivitiesCount(long userId)
 			throws SystemException {
 		System.out.println("getUserGroupsAndOrganizationsActivitiesCount");
+		System.out.println("NO IMPLEMENTADO");		
 		return super.getUserGroupsAndOrganizationsActivitiesCount(userId);
 	}
 	@Override
 	public List<SocialActivity> getUserOrganizationsActivities(long userId,
 			int start, int end) throws SystemException {
 		System.out.println("getUserOrganizationsActivities");
+		System.out.println("NO IMPLEMENTADO");		
 		return super.getUserOrganizationsActivities(userId, start, end);
 	}
 	@Override
 	public int getUserOrganizationsActivitiesCount(long userId)
 			throws SystemException {
 		System.out.println("getUserOrganizationsActivitiesCount");
+		
+		System.out.println("NO IMPLEMENTADO");
+		
+/*
+ * 			SELECT
+				COUNT(*) AS COUNT_VALUE
+			FROM
+				SocialActivity
+			INNER JOIN
+				Group_ ON
+					(Group_.groupId = SocialActivity.groupId)
+			INNER JOIN
+				Organization_ ON
+					(Organization_.organizationId = Group_.classPK)
+			WHERE
+				(SocialActivity.mirrorActivityId = 0) AND
+				(
+					Organization_.organizationId IN (
+						SELECT
+							organizationId
+						FROM
+							Users_Orgs
+						WHERE
+							Users_Orgs.userId = ?
+					)
+				)		
+ */
 		
 		return super.getUserOrganizationsActivitiesCount(userId);
 	}
