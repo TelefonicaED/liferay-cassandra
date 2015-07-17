@@ -1,5 +1,7 @@
 package com.tls.hooks.cassandra;
 
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import com.datastax.driver.core.BoundStatement;
@@ -10,11 +12,15 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.liferay.counter.service.CounterLocalServiceUtil;
+import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
 import com.liferay.portal.model.User;
+import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portlet.social.RelationUserIdException;
 import com.liferay.portlet.social.model.SocialRelation;
+import com.liferay.portlet.social.model.SocialRelationConstants;
 import com.liferay.portlet.social.service.SocialRelationLocalService;
 import com.liferay.portlet.social.service.SocialRelationLocalServiceWrapper;
 
@@ -25,8 +31,17 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	static String node="127.0.0.1";
 	
 	
+	PreparedStatement insertStatement;
+	
 	PreparedStatement getRelationStatement;
+	PreparedStatement getRelationUserId1Statement;
+	PreparedStatement getRelationUserId2Statement;
+	
+	
 	PreparedStatement getRelationUserId1UserId2Type;
+	
+	PreparedStatement getRelationUserId1betweenuserId2Statement;
+	PreparedStatement deleteActivityStatement;
 	
 	
 	   public Session getSession() 
@@ -49,10 +64,10 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 
 
 		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi6 on liferay.socialactivity (userId1);"
+			            "CREATE INDEX IF NOT EXISTS sagi7 on liferay.socialrelation (userId1);"
 		    		  );
 		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi7 on liferay.socialactivity (userId12);"
+			            "CREATE INDEX IF NOT EXISTS sagi8 on liferay.socialrelation (userId2);"
 		    		  );
 		      
 	   } 
@@ -81,66 +96,35 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 				     
 				     // INSERT  
 				  	 insertStatement = session.prepare(
-						      "INSERT INTO liferay.socialactivity " +
-						      "(activityid, groupid, companyid, userid, createdate,mirrorActivityid," +
-						      "classnameid,classpk,type_,extradata,receiveruserid) " +
-						      "VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?,?);");
+						      "INSERT INTO liferay.socialrelation " +
+						      "(relationId, companyid,createdate, userid1,userid2,type_)" +
+						      "VALUES (?, ?, ?, ?, ?,?);");
 				  	 
 				  	 // SELECT
 					 getRelationStatement = session.prepare(
-							   "select * from liferay.socialactivity where relationId= ?;");
+							   "select * from liferay.socialrelation where relationId= ?;");
+					 
+					 
+					 getRelationUserId1Statement = session.prepare(
+							   "select * from liferay.socialrelation where userId1= ?;");
+					 getRelationUserId2Statement = session.prepare(
+							   "select * from liferay.socialrelation where userId2= ?;");
+
+					 getRelationUserId1betweenuserId2Statement = session.prepare(
+							   "select * from liferay.socialrelation where userId1= ? and userId2= ?  ALLOW FILTERING;;");
+					 
+					 
+					 
 					 
 					 getRelationUserId1UserId2Type = session.prepare(
-							   "select * from liferay.socialactivity where userId1= ? and userId2 = ? and type_ = ? ALLOW FILTERING;");
+							   "select * from liferay.socialrelation where userId1= ? and userId2 = ? and type_ = ? ALLOW FILTERING;");
 					 
 					 
 					 
 					 
-				  	 getGroupActivitiesStatement = session.prepare(
-						      "select * from liferay.socialrelation where groupid= ? limit ?;");
-					 getActivityStatement = session.prepare(
-							   "select * from liferay.socialactivity where activityid= ?;");
-					 getActivitiesStatement = session.prepare(
-						      "select * from liferay.socialactivity where userId= ?;");
-					 getActivitiesLimitStatement = session.prepare(
-						      "select * from liferay.socialactivity where userId= ? limit ?;");
-					 getOrganizationUsersActivitiesStatement = session.prepare(
-						      "select * from liferay.socialactivity where userId= ? and mirrorActivityId =0   limit ?  ALLOW FILTERING ;");
-					 getOrganizationUsersActivitiesCountStatement = session.prepare(
-						      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId = 0 ALLOW FILTERING ;");
-					 getActivitiesCountStatement = session.prepare(
-						      "select count(*) from liferay.socialactivity where userId= ?;");			 
-					 getActivitiesClassNameClasspkStatament = session.prepare(
-						      "select * from liferay.socialactivity where classNameId= ? and classPK = ? ALLOW FILTERING;");
-					 getActivitiesreceiverUserIdStatement = session.prepare(
-						      "select * from liferay.socialactivity where receiverUserId = ?;");
-					 getActivitiesClassNameIdStatement = session.prepare(
-						      "select * from liferay.socialactivity where  classNameId= ? limit ?;");	
-					 getActivitiesClassNameIdCountStatement = session.prepare(
-						      "select count(*) from liferay.socialactivity where  classNameId = ?;");
-					 
-					 getGroupUsersActivitiesStatement = session.prepare(
-						      "select * from liferay.socialactivity where userId= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
-					 getGroupUsersActivitiesCountStatement = session.prepare(
-						      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId=0   ALLOW FILTERING;");
-					 
-					 getActivitiesMirrorActivityIdClassNameIdClasspkStatament = session.prepare(
-						      "select * from liferay.socialactivity where mirrorActivityId= ? and classNameId = ?  and classPK = ?  ALLOW FILTERING;");
-					 getActivitiesMirrorActivityIdClassNameIdClasspkCountStatament  = session.prepare(
-						      "select count(*) from liferay.socialactivity where mirrorActivityId= ? and classNameId = ?  and classPK = ?  ALLOW FILTERING;");
-					 
-					 getMirrorActivityStatement = session.prepare(
-						      "select * from liferay.socialactivity where mirrorActivityId= ?;");
-					 
-					 getOrganizationActivitiesStatement = session.prepare(
-						      "select * from liferay.socialactivity where groupid= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
-					 getOrganizationActivitiesCountStatement = session.prepare(
-						      "select count(*) from liferay.socialactivity where groupid= ? and mirrorActivityId=0    ALLOW FILTERING;");
-					  
 					 //DELETE
 					 deleteActivityStatement = session.prepare(
-						      "delete  from liferay.socialactivity where ActivityId= ?;");
-
+						      "delete  from liferay.socialrelation where relationId IN ?;");
 				      
 				  }
 			      
@@ -148,13 +132,14 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 				   
 			  }
 		      
-	   }   		  
+   		  
 		      
 	
 
 	public ExtSocialRelationLocalService(
 			SocialRelationLocalService socialRelationLocalService) {
 		super(socialRelationLocalService);
+		connect();
 		// TODO Auto-generated constructor stub
 	}
 	
@@ -167,9 +152,11 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the social relation that was added
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation addSocialRelation(
 	 		com.liferay.portlet.social.model.SocialRelation socialRelation)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("addSocialRelation");
 	 		return super.addSocialRelation(socialRelation);
 	 	}
 
@@ -179,8 +166,10 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @param relationId the primary key for the new social relation
 	 	* @return the new social relation
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation createSocialRelation(
 	 		long relationId) {
+			System.out.println("createSocialRelation");
 	 		return super.createSocialRelation(relationId);
 	 	}
 
@@ -192,11 +181,33 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @throws PortalException if a social relation with the primary key could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation deleteSocialRelation(
 	 		long relationId)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
-	 		return super.deleteSocialRelation(relationId);
+			System.out.println("deleteSocialRelation");
+			
+			
+			//Search Relation
+			SocialRelation relation = null;
+			BoundStatement boundStatement = new BoundStatement(getRelationStatement);
+			ResultSet results=session.execute(boundStatement.bind(relationId));
+			if(results!=null )		
+			{
+				List<Row> rowlist=results.all();
+				System.out.println(rowlist.size());
+				if(rowlist.size()>0){
+					Row row=rowlist.get(0);
+					relation = getSocialRelationFromRow(row);
+
+				}
+			}			
+			
+			boundStatement = new BoundStatement(deleteActivityStatement);
+			session.execute(boundStatement.bind(relationId));
+			return relation;
+	 		//return super.deleteSocialRelation(relationId);
 	 	}
 
 	 	/**
@@ -206,9 +217,11 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the social relation that was removed
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation deleteSocialRelation(
 	 		com.liferay.portlet.social.model.SocialRelation socialRelation)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("deleteSocialRelation");	 		
 	 		return super.deleteSocialRelation(socialRelation);
 	 	}
 
@@ -281,15 +294,18 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the number of rows that match the dynamic query
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public long dynamicQueryCount(
 	 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
 	 		return super.dynamicQueryCount(dynamicQuery);
 	 	}
 
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation fetchSocialRelation(
 	 		long relationId)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("fetchSocialRelation");	 		
 	 		return super.fetchSocialRelation(relationId);
 	 	}
 
@@ -301,17 +317,21 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @throws PortalException if a social relation with the primary key could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation getSocialRelation(
 	 		long relationId)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("getSocialRelation");	 		
 	 		return super.getSocialRelation(relationId);
 	 	}
+	 	@Override
 
 	 	public com.liferay.portal.model.PersistedModel getPersistedModel(
 	 		java.io.Serializable primaryKeyObj)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("getPersistedModel");	 		
 	 		return super.getPersistedModel(primaryKeyObj);
 	 	}
 
@@ -327,9 +347,11 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the range of social relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public java.util.List<com.liferay.portlet.social.model.SocialRelation> getSocialRelations(
 	 		int start, int end)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("getSocialRelations");	 		
 	 		return super.getSocialRelations(start, end);
 	 	}
 
@@ -339,8 +361,10 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the number of social relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public int getSocialRelationsCount()
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("getSocialRelationsCount");	 		
 	 		return super.getSocialRelationsCount();
 	 	}
 
@@ -351,9 +375,11 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the social relation that was updated
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation updateSocialRelation(
 	 		com.liferay.portlet.social.model.SocialRelation socialRelation)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("updateSocialRelation");	 		
 	 		return super.updateSocialRelation(socialRelation);
 	 	}
 
@@ -365,10 +391,12 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the social relation that was updated
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation updateSocialRelation(
 	 		com.liferay.portlet.social.model.SocialRelation socialRelation,
 	 		boolean merge)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("updateSocialRelation");	 		
 	 		return super.updateSocialRelation(socialRelation,
 	 			merge);
 	 	}
@@ -403,10 +431,12 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	default user
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation addRelation(
 	 		long userId1, long userId2, int type)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("addRelation");	 		
 	 		
 			if (userId1 == userId2) {
 				throw new RelationUserIdException();
@@ -437,44 +467,74 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			
 
 			if (socialrelation == null) {
-				long relationId = counterLocalService.increment();
+				
+				long relationId = CounterLocalServiceUtil.increment();
+				
+				
+				socialrelation = createSocialRelation(relationId);
+				Date createDate=new Date(System.currentTimeMillis());
+				socialrelation.setCreateDate(createDate.getTime());
+				
+				
+				socialrelation.setCompanyId(user1.getCompanyId());
+				socialrelation.setUserId1(userId1);
+				socialrelation.setUserId2(userId2);
+				socialrelation.setType(type);
 
-				relation = socialRelationPersistence.create(relationId);
+				boundStatement = new BoundStatement(insertStatement);
+				session.execute(boundStatement.bind(
+						
 
-				relation.setCompanyId(user1.getCompanyId());
-				relation.setCreateDate(System.currentTimeMillis());
-				relation.setUserId1(userId1);
-				relation.setUserId2(userId2);
-				relation.setType(type);
-
-				socialRelationPersistence.update(relation, false);
+						socialrelation.getRelationId(),
+						socialrelation.getCompanyId(),
+						new Date(socialrelation.getCreateDate()),						
+						socialrelation.getUserId1(),
+						socialrelation.getUserId2(),						
+						socialrelation.getType()
+						));
 			}
 
 			if (SocialRelationConstants.isTypeBi(type)) {
-				SocialRelation biRelation =
-					socialRelationPersistence.fetchByU1_U2_T(
-						userId2, userId1, type);
+				SocialRelation biRelation = null;
+					//socialRelationPersistence.fetchByU1_U2_T(userId2, userId1, type);
+						//Search Relation UserId1 and UserId2
+
+						boundStatement = new BoundStatement(getRelationUserId1UserId2Type);
+						results=session.execute(boundStatement.bind(userId2,userId1,type));
+						if(results!=null )		
+						{
+							List<Row> rowlist=results.all();
+							System.out.println(rowlist.size());
+							if(rowlist.size()>0){
+								Row row=rowlist.get(0);
+								biRelation = getSocialRelationFromRow(row);
+
+							}
+						}						
 
 				if (biRelation == null) {
-					long biRelationId = counterLocalService.increment();
+					long biRelationId = CounterLocalServiceUtil.increment();
+					biRelation = createSocialRelation(biRelationId);
 
-					biRelation = socialRelationPersistence.create(biRelationId);
+					
+					Date createDate=new Date(System.currentTimeMillis());
+					biRelation.setCreateDate(createDate.getTime());
 
-					biRelation.setCompanyId(user1.getCompanyId());
-					biRelation.setCreateDate(System.currentTimeMillis());
-					biRelation.setUserId1(userId2);
-					biRelation.setUserId2(userId1);
-					biRelation.setType(type);
+					boundStatement = new BoundStatement(insertStatement);
+					
 
-					socialRelationPersistence.update(biRelation, false);
+					
+					session.execute(boundStatement.bind(
+							biRelationId,
+							user1.getCompanyId(),
+							new Date(biRelation.getCreateDate()),
+							userId2,
+							userId1,
+							biRelation.getType()
+							));
 				}
 			}
-
-			return relation;
-	 		
-	 		
-	 		
-	 		return super.addRelation(userId1, userId2, type);
+	 		return socialrelation;
 	 	}
 
 	 	/**
@@ -485,10 +545,15 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @throws PortalException if the relation could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public void deleteRelation(long relationId)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
-	 		super.deleteRelation(relationId);
+			System.out.println("deleteRelation1");	
+			
+			BoundStatement boundStatement = new BoundStatement(deleteActivityStatement);
+			session.execute(boundStatement.bind(relationId));
+	 	//	super.deleteRelation(relationId);
 	 	}
 
 	 	/**
@@ -502,10 +567,45 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	applicable) could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public void deleteRelation(long userId1, long userId2, int type)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
-	 		super.deleteRelation(userId1, userId2, type);
+			System.out.println("deleteRelation2");	
+			
+			//Search Relation
+
+			BoundStatement boundStatement = new BoundStatement(getRelationUserId1UserId2Type);
+			ResultSet results=session.execute(boundStatement.bind(userId1,userId2,type));
+			if(results!=null )		
+			{
+				List<Row> rowlist=results.all();
+				System.out.println(rowlist.size());
+				if(rowlist.size()>0){
+					Row row=rowlist.get(0);
+					boundStatement = new BoundStatement(deleteActivityStatement);
+					 ArrayList<Long> numlist = new ArrayList<Long>();
+					 numlist.add( row.getLong("relationid"));
+					session.execute(boundStatement.bind(  numlist));
+				}
+			}	
+			
+			boundStatement = new BoundStatement(getRelationUserId1UserId2Type);
+			results=session.execute(boundStatement.bind(userId2,userId1,type));
+			if(results!=null )		
+			{
+				List<Row> rowlist=results.all();
+				System.out.println(rowlist.size());
+				if(rowlist.size()>0){
+					Row row=rowlist.get(0);
+					boundStatement = new BoundStatement(deleteActivityStatement);
+					 ArrayList<Long> numlist = new ArrayList<Long>();
+					 numlist.add( row.getLong("relationid"));
+					session.execute(boundStatement.bind(  numlist));
+				}
+			}				
+			
+
 	 	}
 
 	 	/**
@@ -517,10 +617,12 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	relation could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public void deleteRelation(
 	 		com.liferay.portlet.social.model.SocialRelation relation)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("deleteRelation3");	 		
 	 		super.deleteRelation(relation);
 	 	}
 
@@ -530,9 +632,44 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @param userId the primary key of the user
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public void deleteRelations(long userId)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
-	 		super.deleteRelations(userId);
+			System.out.println("deleteRelations1");	 	
+			
+			// Search relations by user1
+			Long[] relationsIds =null;
+			BoundStatement boundStatement = new BoundStatement(getRelationUserId1Statement);
+			ResultSet results=session.execute(boundStatement.bind(userId));
+			List<Row> rows=results.all();
+			if(rows.size()>0&&rows.size()>=0){
+				for(int i=0;i<rows.size();i++){
+					Row row=rows.get(i);
+					relationsIds[i] = row.getLong("relationid");
+				}
+			}	
+			//Delete relations by user1
+			boundStatement = new BoundStatement(deleteActivityStatement);
+			session.execute(boundStatement.bind( relationsIds));
+			
+			
+			
+			// Search relations by user2
+			relationsIds =null;
+			 boundStatement = new BoundStatement(getRelationUserId2Statement);
+			results=session.execute(boundStatement.bind(userId));
+			List<Row> rows1=results.all();
+			if(rows.size()>0&&rows.size()>=0){
+				for(int i=0;i<rows.size();i++){
+					Row row=rows.get(i);
+					relationsIds[i] = row.getLong("relationid");
+				}
+			}	
+			//Delete relations by user2
+			boundStatement = new BoundStatement(deleteActivityStatement);
+			session.execute(boundStatement.bind( relationsIds));			
+
+	 		//super.deleteRelations(userId);
 	 	}
 
 	 	/**
@@ -543,10 +680,47 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @throws PortalException if the inverse relation could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public void deleteRelations(long userId1, long userId2)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
-	 		super.deleteRelations(userId1, userId2);
+			System.out.println("deleteRelations2");	 	
+			
+			
+			// Search relations  user1 between user 2
+			Long[] relationsIds =null;
+			BoundStatement boundStatement = new BoundStatement(getRelationUserId1betweenuserId2Statement);
+			ResultSet results=session.execute(boundStatement.bind(userId1,userId2));
+			List<Row> rows=results.all();
+			if(rows.size()>0&&rows.size()>=0){
+				for(int i=0;i<rows.size();i++){
+					Row row=rows.get(i);
+					relationsIds[i] = row.getLong("relationid");
+				}
+			}	
+			//Delete relations by user1
+			boundStatement = new BoundStatement(deleteActivityStatement);
+			session.execute(boundStatement.bind( relationsIds));
+			
+			
+			// Search relations  user1 between user 2
+			relationsIds =null;
+			boundStatement = new BoundStatement(getRelationUserId1betweenuserId2Statement);
+			results=session.execute(boundStatement.bind(userId2,userId1));
+			rows=results.all();
+			if(rows.size()>0&&rows.size()>=0){
+				for(int i=0;i<rows.size();i++){
+					Row row=rows.get(i);
+					relationsIds[i] = row.getLong("relationid");
+				}
+			}	
+			//Delete relations by user1
+			boundStatement = new BoundStatement(deleteActivityStatement);
+			session.execute(boundStatement.bind( relationsIds));			
+			
+			
+			
+	 	//	super.deleteRelations(userId1, userId2);
 	 	}
 
 	 	/**
@@ -570,9 +744,11 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the range of matching relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public java.util.List<com.liferay.portlet.social.model.SocialRelation> getInverseRelations(
 	 		long userId, int type, int start, int end)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("getInverseRelations");	 
 	 		return super.getInverseRelations(userId, type,
 	 			start, end);
 	 	}
@@ -586,8 +762,10 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the number of matching relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public int getInverseRelationsCount(long userId, int type)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+			System.out.println("getInverseRelationsCount");	 	 		
 	 		return super.getInverseRelationsCount(userId, type);
 	 	}
 
@@ -599,12 +777,13 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @throws PortalException if the relation could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation getRelation(
 	 		long relationId)
 	 		throws com.liferay.portal.kernel.exception.PortalException,
 	 			com.liferay.portal.kernel.exception.SystemException {
 	 		
-	 		
+			System.out.println("getRelation1");	
 	 		
 			BoundStatement boundStatement = new BoundStatement(getRelationStatement);
 			ResultSet results=session.execute(boundStatement.bind(relationId));
@@ -637,11 +816,26 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @throws PortalException if the relation could not be found
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public com.liferay.portlet.social.model.SocialRelation getRelation(
 	 		long userId1, long userId2, int type)
-	 		throws com.liferay.portal.kernel.exception.PortalException,
-	 			com.liferay.portal.kernel.exception.SystemException {
-	 		return super.getRelation(userId1, userId2, type);
+	 		throws com.liferay.portal.kernel.exception.SystemException {
+	 		System.out.println("getRelation2");	 	
+	 		
+			SocialRelation socialrelation =null;
+			BoundStatement boundStatement = new BoundStatement(getRelationUserId1UserId2Type);
+			ResultSet results=session.execute(boundStatement.bind(userId1,userId2,type));
+			if(results!=null )		
+			{
+				List<Row> rowlist=results.all();
+				System.out.println(rowlist.size());
+				if(rowlist.size()>0){
+					Row row=rowlist.get(0);
+					socialrelation = getSocialRelationFromRow(row);
+
+				}
+			}
+	 		return socialrelation;
 	 	}
 
 	 	/**
@@ -665,9 +859,15 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the range of relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public java.util.List<com.liferay.portlet.social.model.SocialRelation> getRelations(
 	 		long userId, int type, int start, int end)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+	 		System.out.println("getRelations1");
+	 		
+	 		
+	 		
+	 		
 	 		return super.getRelations(userId, type, start, end);
 	 	}
 
@@ -691,9 +891,11 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the range of relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public java.util.List<com.liferay.portlet.social.model.SocialRelation> getRelations(
 	 		long userId1, long userId2, int start, int end)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+	 		System.out.println("getRelations2");	 	
 	 		return super.getRelations(userId1, userId2,
 	 			start, end);
 	 	}
@@ -707,8 +909,10 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the number of relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public int getRelationsCount(long userId, int type)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+	 		System.out.println("getRelationsCount1");	 	
 	 		return super.getRelationsCount(userId, type);
 	 	}
 
@@ -720,8 +924,10 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	* @return the number of relations
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public int getRelationsCount(long userId1, long userId2)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+	 		System.out.println("getRelationsCount2");	 
 	 		return super.getRelationsCount(userId1, userId2);
 	 	}
 
@@ -738,9 +944,23 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	otherwise
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public boolean hasRelation(long userId1, long userId2, int type)
-	 		throws com.liferay.portal.kernel.exception.SystemException {
-	 		return super.hasRelation(userId1, userId2, type);
+	 		throws  com.liferay.portal.kernel.exception.SystemException {
+	 		System.out.println("hasRelation");	 
+	 		
+	 		
+	 		 
+			SocialRelation relation = this.getRelation(userId1, userId2, type);
+
+				if (relation == null) {
+					return false;
+				}
+				else {
+					return true;
+				}	 		
+	 		
+	 		//return super.hasRelation(userId1, userId2, type);
 	 	}
 
 	 	/**
@@ -764,6 +984,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	*/
 	 	public boolean isRelatable(long userId1, long userId2, int type)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
+	 		System.out.println("isRelatable");	 
 	 		return super.isRelatable(userId1, userId2, type);
 	 	}
 
@@ -772,7 +993,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	
 	 	private SocialRelation getSocialRelationFromRow(Row row)
 				throws SystemException {
-			SocialRelation socialRelation= this.createSocialRelation(row.getLong("relatiomid"));
+			SocialRelation socialRelation= this.createSocialRelation(row.getLong("relationid"));
 			socialRelation.setCompanyId(row.getLong("companyid"));
 			socialRelation.setCreateDate(row.getDate("createdate").getTime());
 			socialRelation.setUserId1(row.getLong("userid1"));

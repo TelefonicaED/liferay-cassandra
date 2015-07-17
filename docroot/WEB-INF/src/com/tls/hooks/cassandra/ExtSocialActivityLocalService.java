@@ -111,8 +111,8 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		                  "type_ int," +
 		                  "extraData varchar," +
 		                  "receiverUserId bigint," +
-		                  "PRIMARY KEY (activityId)" + 
-		                  ");");
+		                  "PRIMARY KEY (activityId,createDate)" + 
+		                  ") WITH CLUSTERING ORDER BY (createDate DESC);");
 
 		      session.execute(
 			            "CREATE INDEX IF NOT EXISTS sagi1 on liferay.socialactivity (classnameid);"
@@ -130,7 +130,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 			            "CREATE INDEX IF NOT EXISTS sagi5 on liferay.socialactivity (receiverUserId);"
 		      );
 		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi5 on liferay.socialactivity (userId);"
+			            "CREATE INDEX IF NOT EXISTS sagi6 on liferay.socialactivity (userId);"
 		      );
 		      
 		      
