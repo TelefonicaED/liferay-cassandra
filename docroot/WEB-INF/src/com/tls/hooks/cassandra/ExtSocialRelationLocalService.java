@@ -13,6 +13,7 @@ import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.liferay.counter.service.CounterLocalServiceUtil;
+
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
 import com.liferay.portal.model.User;
@@ -982,10 +983,47 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	 	the given type; <code>false</code> otherwise
 	 	* @throws SystemException if a system exception occurred
 	 	*/
+	 	@Override
 	 	public boolean isRelatable(long userId1, long userId2, int type)
 	 		throws com.liferay.portal.kernel.exception.SystemException {
 	 		System.out.println("isRelatable");	 
-	 		return super.isRelatable(userId1, userId2, type);
+	 		
+			if (userId1 == userId2) {
+				return false;
+			}
+
+			User user1=null;
+			try {
+				user1 = UserLocalServiceUtil.getUser(userId1);
+			} catch (com.liferay.portal.kernel.exception.PortalException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+
+
+			if ((user1 == null) || user1.isDefaultUser()) {
+				return false;
+			}
+
+			User user2=null;
+			try {
+				user2 = UserLocalServiceUtil.getUser(userId2);
+			} catch (com.liferay.portal.kernel.exception.PortalException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			
+
+			if ((user2 == null) || user2.isDefaultUser()) {
+				return false;
+			}
+
+			return !hasRelation(userId1, userId2, type);
+	 		
+	 		
+	 		
+	 		//return super.isRelatable(userId1, userId2, type);
 	 	}
 
 

@@ -73,14 +73,17 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	PreparedStatement getActivitiesCountStatement;
 	PreparedStatement getOrganizationUsersActivitiesStatement;
 	PreparedStatement getOrganizationUsersActivitiesCountStatement;
-	
 	PreparedStatement getOrganizationActivitiesStatement;
 	PreparedStatement getOrganizationActivitiesCountStatement;
-	
-	
 	PreparedStatement getGroupUsersActivitiesStatement;
 	PreparedStatement getGroupUsersActivitiesCountStatement;	
 	PreparedStatement getMirrorActivityStatement;
+	PreparedStatement getRelationActivitiesUserStatement;
+	PreparedStatement getRelationActivitiesUserTypeStatement;
+	PreparedStatement getRelationActivitiesUserCountStatement;
+	
+	
+	
 	PreparedStatement deleteActivityStatement;
 
 	
@@ -209,6 +212,14 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 				      "select * from liferay.socialactivity where groupid= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
 			 getOrganizationActivitiesCountStatement = session.prepare(
 				      "select count(*) from liferay.socialactivity where groupid= ? and mirrorActivityId=0    ALLOW FILTERING;");
+			 
+			 
+			 getRelationActivitiesUserStatement = session.prepare(
+				      "select userId2  from liferay.socialrelation where userId1= ?;");
+				 
+			 getRelationActivitiesUserTypeStatement = session.prepare(
+				      "select userId2  from liferay.socialrelation where userId1= ? and type_ = ? ALLOW FILTERING;");					 
+			 
 			  
 			 //DELETE
 			 deleteActivityStatement = session.prepare(
@@ -302,7 +313,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		
 //CASSANDRA
 
-		
+
 		
 		
 	
@@ -975,24 +986,84 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public List<SocialActivity> getRelationActivities(long userId, int start,
 			int end) throws SystemException {
 		System.out.println("getRelationActivities");
-		return super.getRelationActivities(userId, start, end);
+		
+		 
+		
+	
+        List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
+		BoundStatement boundStatement = new BoundStatement(getRelationActivitiesUserStatement);
+		ResultSet results=session.execute(boundStatement.bind(userId));
+		List<Row> rows=results.all();
+		if(rows.size()>0&&rows.size()>=start){
+			for(int i=0;i<rows.size();i++){
+				rows.get(i).getLong(0);	
+				groupActivities.addAll(this.getUserActivities(rows.get(i).getLong(0), start, end));
+			}
+		}
+	
+		return groupActivities;
+		//return super.getRelationActivities(userId, start, end);
 	}
 	@Override
 	public List<SocialActivity> getRelationActivities(long userId, int type,
 			int start, int end) throws SystemException {
 		System.out.println("getRelationActivities2");
-		return super.getRelationActivities(userId, type, start, end);
+		
+	
+        List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
+		BoundStatement boundStatement = new BoundStatement(getRelationActivitiesUserTypeStatement);
+		ResultSet results=session.execute(boundStatement.bind(userId,type));
+		List<Row> rows=results.all();
+		if(rows.size()>0&&rows.size()>=start){
+			for(int i=0;i<rows.size();i++){
+				rows.get(i).getLong(0);	
+				groupActivities.addAll(this.getUserActivities(rows.get(i).getLong(0), start, end));
+			}
+		}
+	
+		return groupActivities;
+		//return super.getRelationActivities(userId, start, end);
+
 	}
 	@Override
 	public int getRelationActivitiesCount(long userId) throws SystemException {
 		System.out.println("getRelationActivitiesCount");
-		return super.getRelationActivitiesCount(userId);
+		
+        int cont =0;		
+        List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
+		BoundStatement boundStatement = new BoundStatement(getRelationActivitiesUserStatement);
+		ResultSet results=session.execute(boundStatement.bind(userId));
+		List<Row> rows=results.all();
+		if(rows.size()>0&&rows.size()>=1){
+			for(int i=0;i<rows.size();i++){
+				cont = cont + this.getUserActivitiesCount(rows.get(i).getLong(0));
+			}
+		} 
+	
+		return cont;		
+		
+		//return super.getRelationActivitiesCount(userId);
 	}
 	@Override
 	public int getRelationActivitiesCount(long userId, int type)
 			throws SystemException {
 		System.out.println("getRelationActivitiesCount2");
-		return super.getRelationActivitiesCount(userId, type);
+
+        int cont =0;		
+        List<SocialActivity> groupActivities=new java.util.ArrayList<SocialActivity>();
+		BoundStatement boundStatement = new BoundStatement(getRelationActivitiesUserTypeStatement);
+		ResultSet results=session.execute(boundStatement.bind(userId,type));
+		List<Row> rows=results.all();
+		if(rows.size()>0&&rows.size()>=1){
+			for(int i=0;i<rows.size();i++){
+				cont = cont + this.getUserActivitiesCount(rows.get(i).getLong(0));
+			}
+		}
+	
+		return cont;			
+		
+		
+		//return super.getRelationActivitiesCount(userId, type);
 	}
 	
 /************************************************************************************************/	
