@@ -1,14 +1,13 @@
+
 package com.tls.hooks.cassandra;
 
 import java.util.Date;
 import java.util.List;
 
-import org.omg.CORBA.portable.ValueOutputStream;
+
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.Metadata;
+
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -18,31 +17,19 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.lar.ImportExportThreadLocal;
 import com.liferay.portal.model.Group;
-import com.liferay.portal.model.GroupModel;
 import com.liferay.portal.model.Layout;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.service.GroupLocalServiceUtil;
-import com.liferay.portal.service.GroupService;
-import com.liferay.portal.service.GroupServiceUtil;
 import com.liferay.portal.service.LayoutLocalServiceUtil;
 import com.liferay.portal.service.OrganizationLocalServiceUtil;
-import com.liferay.portal.service.UserGroupLocalServiceUtil;
-import com.liferay.portal.service.UserGroupRoleServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
-import com.liferay.portal.service.UserServiceUtil;
-import com.liferay.portal.service.permission.GroupPermissionUtil;
-import com.liferay.portal.service.persistence.GroupFinderUtil;
-import com.liferay.portal.service.persistence.OrganizationUtil;
-import com.liferay.portal.service.persistence.UserGroupFinderUtil;
 import com.liferay.portal.util.PortalUtil;
 import com.liferay.portlet.asset.model.AssetEntry;
 import com.liferay.portlet.asset.service.AssetEntryLocalServiceUtil;
 import com.liferay.portlet.social.model.SocialActivity;
 import com.liferay.portlet.social.model.SocialActivityDefinition;
-import com.liferay.portlet.social.model.SocialRequestWrapper;
 import com.liferay.portlet.social.service.SocialActivityCounterLocalServiceUtil;
-import com.liferay.portlet.social.service.SocialActivityLocalServiceUtil;
 import com.liferay.portlet.social.service.SocialActivityLocalServiceWrapper;
 import com.liferay.portlet.social.service.SocialActivityLocalService;
 import com.liferay.portlet.social.service.SocialActivitySettingLocalServiceUtil;
@@ -51,11 +38,12 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	/* (non-Java-doc)
 	 * @see com.liferay.portlet.social.service.SocialActivityLocalServiceWrapper#SocialActivityLocalServiceWrapper(SocialActivityLocalService socialActivityLocalService)
 	 */
-	private static Cluster cluster;
+/* 	private static Cluster cluster;
 	private  Session session;
 	static String node="127.0.0.1";
+*/	
 	
-	
+	Session session = ExtConexionCassandra.getSesion();
 	
   	PreparedStatement insertStatement;
 	PreparedStatement getGroupActivitiesStatement;
@@ -82,22 +70,9 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	PreparedStatement getRelationActivitiesUserTypeStatement;
 	PreparedStatement getRelationActivitiesUserCountStatement;
 	
-	
-	
 	PreparedStatement deleteActivityStatement;
 
-	
-	
-	
-	
-      	
-	
-	
-	
-	   public Session getSession() 
-	   {
-	      return this.session;
-	   }
+
 	   public void createSchema() {
 		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
 		            "= {'class':'SimpleStrategy', 'replication_factor':1};");
@@ -141,99 +116,82 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		      
 		      
 		   }
-	   public void connect() 
-	   {
-		  
-		  if(cluster==null)
-		  {
-		      cluster = Cluster.builder()
-		            .addContactPoint(node)
-		            .build();
-		      Metadata metadata = cluster.getMetadata();
-		      System.out.printf("Connected to cluster: %s\n", 
-		            metadata.getClusterName());
-		      for ( Host host : metadata.getAllHosts() ) {
-		         System.out.printf("Datatacenter: %s; Host: %s; Rack: %s\n",
-		               host.getDatacenter(), host.getAddress(), host.getRack());
-		      }
-		      
-		      session = cluster.connect();
-		      createSchema();
-		      
-		      
-		      
+	   
 
-		     
-		     // INSERT  
-		  	 insertStatement = session.prepare(
-				      "INSERT INTO liferay.socialactivity " +
-				      "(activityid, groupid, companyid, userid, createdate,mirrorActivityid," +
-				      "classnameid,classpk,type_,extradata,receiveruserid) " +
-				      "VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?,?);");
-		  	 
-		  	 // SELECT
-		  	 getGroupActivitiesStatement = session.prepare(
-				      "select * from liferay.socialactivity where groupid= ? limit ?;");
-			 getActivityStatement = session.prepare(
-					   "select * from liferay.socialactivity where activityid= ?;");
-			 getActivitiesStatement = session.prepare(
-				      "select * from liferay.socialactivity where userId= ?;");
-			 getActivitiesLimitStatement = session.prepare(
-				      "select * from liferay.socialactivity where userId= ? limit ?;");
-			 getOrganizationUsersActivitiesStatement = session.prepare(
-				      "select * from liferay.socialactivity where userId= ? and mirrorActivityId =0   limit ?  ALLOW FILTERING ;");
-			 getOrganizationUsersActivitiesCountStatement = session.prepare(
-				      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId = 0 ALLOW FILTERING ;");
-			 getActivitiesCountStatement = session.prepare(
-				      "select count(*) from liferay.socialactivity where userId= ?;");			 
-			 getActivitiesClassNameClasspkStatament = session.prepare(
-				      "select * from liferay.socialactivity where classNameId= ? and classPK = ? ALLOW FILTERING;");
-			 getActivitiesreceiverUserIdStatement = session.prepare(
-				      "select * from liferay.socialactivity where receiverUserId = ?;");
-			 getActivitiesClassNameIdStatement = session.prepare(
-				      "select * from liferay.socialactivity where  classNameId= ? limit ?;");	
-			 getActivitiesClassNameIdCountStatement = session.prepare(
-				      "select count(*) from liferay.socialactivity where  classNameId = ?;");
-			 
-			 getGroupUsersActivitiesStatement = session.prepare(
-				      "select * from liferay.socialactivity where userId= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
-			 getGroupUsersActivitiesCountStatement = session.prepare(
-				      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId=0   ALLOW FILTERING;");
-			 
-			 getActivitiesMirrorActivityIdClassNameIdClasspkStatament = session.prepare(
-				      "select * from liferay.socialactivity where mirrorActivityId= ? and classNameId = ?  and classPK = ?  ALLOW FILTERING;");
-			 getActivitiesMirrorActivityIdClassNameIdClasspkCountStatament  = session.prepare(
-				      "select count(*) from liferay.socialactivity where mirrorActivityId= ? and classNameId = ?  and classPK = ?  ALLOW FILTERING;");
-			 
-			 getMirrorActivityStatement = session.prepare(
-				      "select * from liferay.socialactivity where mirrorActivityId= ?;");
-			 
-			 getOrganizationActivitiesStatement = session.prepare(
-				      "select * from liferay.socialactivity where groupid= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
-			 getOrganizationActivitiesCountStatement = session.prepare(
-				      "select count(*) from liferay.socialactivity where groupid= ? and mirrorActivityId=0    ALLOW FILTERING;");
-			 
-			 
-			 getRelationActivitiesUserStatement = session.prepare(
-				      "select userId2  from liferay.socialrelation where userId1= ?;");
-				 
-			 getRelationActivitiesUserTypeStatement = session.prepare(
-				      "select userId2  from liferay.socialrelation where userId1= ? and type_ = ? ALLOW FILTERING;");					 
-			 
-			  
-			 //DELETE
-			 deleteActivityStatement = session.prepare(
-				      "delete  from liferay.socialactivity where ActivityId= ?;");
-
-		      
-		  }
 	      
 
-		   
-	  }
+	private void preparedStatements () {
+		
+	     
+	     // INSERT  
+	  	 insertStatement = session.prepare(
+			      "INSERT INTO liferay.socialactivity " +
+			      "(activityid, groupid, companyid, userid, createdate,mirrorActivityid," +
+			      "classnameid,classpk,type_,extradata,receiveruserid) " +
+			      "VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?,?);");
+	  	 
+	  	 // SELECT
+	  	 getGroupActivitiesStatement = session.prepare(
+			      "select * from liferay.socialactivity where groupid= ? limit ?;");
+		 getActivityStatement = session.prepare(
+				   "select * from liferay.socialactivity where activityid= ?;");
+		 getActivitiesStatement = session.prepare(
+			      "select * from liferay.socialactivity where userId= ?;");
+		 getActivitiesLimitStatement = session.prepare(
+			      "select * from liferay.socialactivity where userId= ? limit ?;");
+		 getOrganizationUsersActivitiesStatement = session.prepare(
+			      "select * from liferay.socialactivity where userId= ? and mirrorActivityId =0   limit ?  ALLOW FILTERING ;");
+		 getOrganizationUsersActivitiesCountStatement = session.prepare(
+			      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId = 0 ALLOW FILTERING ;");
+		 getActivitiesCountStatement = session.prepare(
+			      "select count(*) from liferay.socialactivity where userId= ?;");			 
+		 getActivitiesClassNameClasspkStatament = session.prepare(
+			      "select * from liferay.socialactivity where classNameId= ? and classPK = ? ALLOW FILTERING;");
+		 getActivitiesreceiverUserIdStatement = session.prepare(
+			      "select * from liferay.socialactivity where receiverUserId = ?;");
+		 getActivitiesClassNameIdStatement = session.prepare(
+			      "select * from liferay.socialactivity where  classNameId= ? limit ?;");	
+		 getActivitiesClassNameIdCountStatement = session.prepare(
+			      "select count(*) from liferay.socialactivity where  classNameId = ?;");
+		 
+		 getGroupUsersActivitiesStatement = session.prepare(
+			      "select * from liferay.socialactivity where userId= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
+		 getGroupUsersActivitiesCountStatement = session.prepare(
+			      "select count(*) from liferay.socialactivity where userId= ? and mirrorActivityId=0   ALLOW FILTERING;");
+		 
+		 getActivitiesMirrorActivityIdClassNameIdClasspkStatament = session.prepare(
+			      "select * from liferay.socialactivity where mirrorActivityId= ? and classNameId = ?  and classPK = ?  ALLOW FILTERING;");
+		 getActivitiesMirrorActivityIdClassNameIdClasspkCountStatament  = session.prepare(
+			      "select count(*) from liferay.socialactivity where mirrorActivityId= ? and classNameId = ?  and classPK = ?  ALLOW FILTERING;");
+		 
+		 getMirrorActivityStatement = session.prepare(
+			      "select * from liferay.socialactivity where mirrorActivityId= ?;");
+		 
+		 getOrganizationActivitiesStatement = session.prepare(
+			      "select * from liferay.socialactivity where groupid= ? and mirrorActivityId=0 limit ?  ALLOW FILTERING;");
+		 getOrganizationActivitiesCountStatement = session.prepare(
+			      "select count(*) from liferay.socialactivity where groupid= ? and mirrorActivityId=0    ALLOW FILTERING;");
+		 
+		 
+		 getRelationActivitiesUserStatement = session.prepare(
+			      "select userId2  from liferay.socialrelation where userId1= ?;");
+			 
+		 getRelationActivitiesUserTypeStatement = session.prepare(
+			      "select userId2  from liferay.socialrelation where userId1= ? and type_ = ? ALLOW FILTERING;");					 
+		 
+		  
+		 //DELETE
+		 deleteActivityStatement = session.prepare(
+			      "delete  from liferay.socialactivity where ActivityId= ?;");
+
+		
+		
+	}
+	  
 	public ExtSocialActivityLocalService(SocialActivityLocalService socialActivityLocalService) {
 		super(socialActivityLocalService);
-		connect();
+ 	    createSchema();
+ 	    preparedStatements();
 	}
 	@Override
 	public SocialActivity addSocialActivity(SocialActivity socialActivity)
