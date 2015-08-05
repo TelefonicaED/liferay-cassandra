@@ -2,8 +2,16 @@ package com.tls.hooks.cassandra;
 
 import java.util.List;
 
+import com.liferay.counter.NoSuchCounterException;
+import com.liferay.counter.model.Counter;
 import com.liferay.counter.service.CounterLocalService;
+import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.counter.service.CounterLocalServiceWrapper;
+import com.liferay.counter.service.persistence.CounterFinderUtil;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.transaction.Isolation;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -16,13 +24,74 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.shaded.netty.util.internal.ConcurrentHashMap;
+
+
+
+
+
+import java.util.Map;
 
 
 
 public class ExtCounterLocalService extends CounterLocalServiceWrapper {
+	
+	Session session = ExtConexionCassandra.getSesion();
+	
+	PreparedStatement addCounterStatement;
+	PreparedStatement deteleCounterStatement;
+	PreparedStatement getCounterStatement;
+	PreparedStatement getCountersStatement;		
+	PreparedStatement getCountersCountStatement;	
+	PreparedStatement getNamesStatement;
+	
+	
+	   public void createSchema() {
+		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
+		            "= {'class':'SimpleStrategy', 'replication_factor':1};");
+		      session.execute(
+		            "CREATE TABLE IF NOT EXISTS liferay.counter (" +
+		                  "name varchar," +
+		            	  "currentId counter, "+	
+		                  "PRIMARY KEY (name)" + 
+		                  ") ;");
+		   }
+	   
+		private void preparedStatements () {
+			
+			
+			 // SELECT
+			
+			getCounterStatement = session.prepare(
+		  			"select * from liferay.counter where  name=?;");
+			
+			getCountersStatement = session.prepare(
+		  			"select * from liferay.counter LIMIT ?;");
+			
+			getCountersCountStatement = session.prepare(
+		  			"select count(*) from liferay.counter;");
+			
+			getNamesStatement = session.prepare(
+		  			"select name from liferay.counter;");
+			
+             // INSERT O UDATE
+			
+			addCounterStatement = session.prepare(
+		  			"update  liferay.counter SET currentid = currentid + ? WHERE  name=? ;"); 	
+			
+			// DELETE
+			
+			deteleCounterStatement = session.prepare(
+		  			"DELETE FROM liferay.counter where  name= ?;");
+ 	
+			
+		}
+	
 
 	public ExtCounterLocalService(CounterLocalService counterLocalService) {
 		super(counterLocalService);
+ 	    createSchema();
+ 	    preparedStatements();
 		// TODO Auto-generated constructor stub
 	}
 
@@ -38,8 +107,13 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public com.liferay.counter.model.Counter addCounter(
 		com.liferay.counter.model.Counter counter)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("addCounter");
 
-		return super.addCounter(counter);
+		
+		BoundStatement boundStatement = new BoundStatement(addCounterStatement);
+		session.execute(boundStatement.bind(counter.getCurrentId(), counter.getName()));
+
+		return counter;
 	}
 
 	/**
@@ -50,6 +124,8 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	*/
 	public com.liferay.counter.model.Counter createCounter(
 		java.lang.String name) {
+		System.out.println("createCounter");
+
 		return super.createCounter(name);
 	}
 
@@ -65,6 +141,15 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 		java.lang.String name)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("deleteCounter1");
+
+		//Search the counter
+		Counter counter =this.getCounter(name);
+		
+		
+		BoundStatement boundStatement = new BoundStatement(deteleCounterStatement);
+		ResultSet results=session.execute(boundStatement.bind(counter.getName()));
+
 		return super.deleteCounter(name);
 	}
 
@@ -78,11 +163,26 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public com.liferay.counter.model.Counter deleteCounter(
 		com.liferay.counter.model.Counter counter)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.deleteCounter(counter);
+
+		System.out.println("deleteCounter2");
+
+	
+			try {
+				this.deleteCounter(counter.getName());
+			} catch (PortalException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return counter;
+		
+		//return super.deleteCounter(counter);
 	}
 
 	public com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery() {
+		System.out.println("dynamicQuery1");
 		return super.dynamicQuery();
+
+
 	}
 
 	/**
@@ -96,6 +196,8 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("dynamicQuery2");
+
 		return super.dynamicQuery(dynamicQuery);
 	}
 
@@ -116,6 +218,8 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public java.util.List dynamicQuery(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery, int start,
 		int end) throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("dynamicQuery3");
+
 		return super.dynamicQuery(dynamicQuery, start, end);
 	}
 
@@ -139,6 +243,8 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 		int end,
 		com.liferay.portal.kernel.util.OrderByComparator orderByComparator)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("dynamicQuery4");
+
 		return super.dynamicQuery(dynamicQuery, start, end,
 			orderByComparator);
 	}
@@ -153,12 +259,30 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public long dynamicQueryCount(
 		com.liferay.portal.kernel.dao.orm.DynamicQuery dynamicQuery)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("dynamicQueryCount");
+
 		return super.dynamicQueryCount(dynamicQuery);
 	}
 
+	/**
+	 * Returns the counter with the primary key or returns <code>null</code> if it could not be found.
+	 *
+	 * @param name the primary key of the counter
+	 * @return the counter, or <code>null</code> if a counter with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */
 	public com.liferay.counter.model.Counter fetchCounter(java.lang.String name)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.fetchCounter(name);
+		System.out.println("fetchCounter");
+
+		
+		try {
+			  return this.getCounter(name);
+		} catch (PortalException e) {
+			// TODO Auto-generated catch block
+			return null;
+		}
+		//return super.fetchCounter(name);
 	}
 
 	/**
@@ -172,13 +296,44 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public com.liferay.counter.model.Counter getCounter(java.lang.String name)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		return super.getCounter(name);
+		System.out.println("getCounter");
+
+		
+		
+		BoundStatement boundStatement = new BoundStatement(getCounterStatement);
+		ResultSet results=session.execute(boundStatement.bind(name));
+		if(results!=null ){
+			List<Row> rowlist=results.all();
+			if(rowlist.size()>0){
+				Row row=rowlist.get(0);
+				Counter counter = getCounterFromRow(row);
+				return counter;
+			}else{
+					throw new NoSuchCounterException( "No Counter exists with the primary key " +
+						name);
+			}
+		}
+		return null;
+		
+		//return super.getCounter(name);
 	}
 
+	
+	/**
+	 * Returns the counter with the primary key or throws a {@link com.liferay.portal.NoSuchModelException} if it could not be found.
+	 *
+	 * @param primaryKey the primary key of the counter
+	 * @return the counter
+	 * @throws com.liferay.portal.NoSuchModelException if a counter with the primary key could not be found
+	 * @throws SystemException if a system exception occurred
+	 */	
 	public com.liferay.portal.model.PersistedModel getPersistedModel(
 		java.io.Serializable primaryKeyObj)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
+		
+		System.out.println("getPersistedModel");
+
 		return super.getPersistedModel(primaryKeyObj);
 	}
 
@@ -197,7 +352,24 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public java.util.List<com.liferay.counter.model.Counter> getCounters(
 		int start, int end)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.getCounters(start, end);
+		
+		System.out.println("getCounters");
+
+		List<Counter> counters=new java.util.ArrayList<Counter>();
+		BoundStatement boundStatement = new BoundStatement(getCountersStatement);
+		boundStatement.setFetchSize(end);
+		ResultSet results=session.execute(boundStatement.bind(end));
+		List<Row> rows=results.all();
+		if(rows.size()>0&&rows.size()>=start){
+			for(int i=start;i<rows.size();i++){
+				Row row=rows.get(i);
+				Counter counter = getCounterFromRow(row);
+				counters.add(counter);
+			}
+		}
+		return counters;			
+		
+		//return super.getCounters(start, end);
 	}
 
 	/**
@@ -208,7 +380,16 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	*/
 	public int getCountersCount()
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.getCountersCount();
+		System.out.println("getCountersCount");
+
+		BoundStatement boundStatement = new BoundStatement(getCountersCountStatement);
+		ResultSet results=session.execute(boundStatement.bind());
+		List<Row> rows=results.all();
+		int cont =0;
+		cont = (int) rows.get(0).getLong(0);
+		return cont; 
+		
+		//return super.getCountersCount();
 	}
 
 	/**
@@ -221,7 +402,16 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public com.liferay.counter.model.Counter updateCounter(
 		com.liferay.counter.model.Counter counter)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.updateCounter(counter);
+		
+		System.out.println("updateCounter");
+
+		
+		return this.addCounter(counter);
+		//return super.updateCounter(counter);
+		
+		
+		
+		
 	}
 
 	/**
@@ -235,6 +425,8 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	public com.liferay.counter.model.Counter updateCounter(
 		com.liferay.counter.model.Counter counter, boolean merge)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("updateCounter");
+
 		return super.updateCounter(counter, merge);
 	}
 
@@ -244,6 +436,8 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	* @return the Spring bean ID for this bean
 	*/
 	public java.lang.String getBeanIdentifier() {
+		System.out.println("getBeanIdentifier");
+
 		return super.getBeanIdentifier();
 	}
 
@@ -253,49 +447,155 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	* @param beanIdentifier the Spring bean ID for this bean
 	*/
 	public void setBeanIdentifier(java.lang.String beanIdentifier) {
+		System.out.println("setBeanIdentifier");
 		super.setBeanIdentifier(beanIdentifier);
 	}
 
 	public java.util.List<java.lang.String> getNames()
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.getNames();
+		System.out.println("getNames");
+
+				List<String> counters=new java.util.ArrayList<String>();
+				counters =null;
+				BoundStatement boundStatement = new BoundStatement(getNamesStatement);
+				ResultSet results=session.execute(boundStatement.bind());
+				List<Row> rows=results.all();
+				if(rows.size()>0&&rows.size()>=0){
+					for(int i=0;i<rows.size();i++){
+						Row row=rows.get(i);
+ 						counters.add(row.getString("name"));
+					}
+				}
+				return counters;					
+		//return super.getNames();
 	}
 
 	public long increment()
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.increment();
+		System.out.println("increment1");
+
+	    
+		return increment(_NAME);
+		
+		
+		//return super.increment(name);
+		
 	}
 
 	public long increment(java.lang.String name)
 		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.increment(name);
+		System.out.println("increment2");
+		
+		try {
+			return increment(name,_MINIMUM_INCREMENT_SIZE);
+		} catch (PortalException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return 0;
 	}
 
-	public long increment(java.lang.String name, int size)
-		throws com.liferay.portal.kernel.exception.SystemException {
-		return super.increment(name, size);
+	
+	// *****************************************************************************************************
+	//
+	//Este codigo está preparado para interrelacionar los contadores de Cassandra con Counter de Liferay.
+	//Sino  se usa estas comprobaciones los contadores inicializarían a 1con lo cual daría error Duplicate Key en tablas de Liferay,
+	//
+	// *****************************************************************************************************
+   
+	public long increment(java.lang.String name, long size)
+		throws com.liferay.portal.kernel.exception.SystemException, PortalException {
+		System.out.println("increment3");
+		
+		
+		// To Do Cache
+		
+		//*********************************//
+		
+		if (size < _MINIMUM_INCREMENT_SIZE) {
+			size = _MINIMUM_INCREMENT_SIZE;
+		}
+		
+
+		//Comprobacion si existe contador para la clase en Liferay
+		
+		DynamicQuery query = DynamicQueryFactoryUtil.forClass(Counter.class)
+				.add(PropertyFactoryUtil.forName("name").eq(name));
+
+	     List  lista=  CounterLocalServiceUtil.dynamicQuery(query);		
+	    
+	     Counter counter = (Counter) lista.get(0);
+
+			
+	    long contador=0;
+	    
+	    if (counter == null) { //No existe en Counter
+	    	BoundStatement boundStatement = new BoundStatement(addCounterStatement);
+			session.execute(boundStatement.bind(size,name));
+
+	    }else{ //Existe en Counter
+	    	 //Buscar en cassandra si existe, se incrementa 1
+			// Get CurrentId
+	    	BoundStatement boundStatement = new BoundStatement(getCounterStatement);
+			ResultSet results=session.execute(boundStatement.bind(name));
+			List<Row> rows=results.all();
+
+			if (rows.isEmpty()){ // No existe
+				// Si existe, se busca el valor y se incrementa 1 
+				boundStatement = new BoundStatement(addCounterStatement);
+				session.execute(boundStatement.bind(counter.getCurrentId()+1 ,name));
+				contador = counter.getCurrentId() +1;
+			}else{
+					boundStatement = new BoundStatement(addCounterStatement);			
+				    results=session.execute(boundStatement.bind(size,name));
+				    
+				    boundStatement = new BoundStatement(getCounterStatement);
+				    results = session.execute(boundStatement.bind(name));
+					 rows=results.all();
+					 Row row=rows.get(0);
+					 
+					contador = row.getLong(1);
+			}
+	    }
+	    
+		return contador;		
+
+		//return super.increment(name, size);
 	}
 
 	public void rename(java.lang.String oldName, java.lang.String newName)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("rename");
+
 		super.rename(oldName, newName);
 	}
 
 	public void reset(java.lang.String name)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("reset1");
+
 		super.reset(name);
 	}
 
 	public void reset(java.lang.String name, long size)
 		throws com.liferay.portal.kernel.exception.SystemException {
+		System.out.println("reset2");
+
 		super.reset(name, size);
 	}
 
+    
 
 
+	
+	private Counter getCounterFromRow(Row row)
+			throws SystemException {
+		Counter counter= this.createCounter(row.getString("name"));
+		counter.setCurrentId(row.getLong("currentId"));
+		return counter;
+	}
 
-
-
-
+	private static final long _MINIMUM_INCREMENT_SIZE = 1;
+	private static final String _NAME = Counter.class.getName();
 
 }
