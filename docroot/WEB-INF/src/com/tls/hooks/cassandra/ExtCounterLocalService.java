@@ -46,16 +46,6 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	PreparedStatement getNamesStatement;
 	
 	
-	   public void createSchema() {
-		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
-		            "= {'class':'SimpleStrategy', 'replication_factor':1};");
-		      session.execute(
-		            "CREATE TABLE IF NOT EXISTS liferay.counter (" +
-		                  "name varchar," +
-		            	  "currentId counter, "+	
-		                  "PRIMARY KEY (name)" + 
-		                  ") ;");
-		   }
 	   
 		private void preparedStatements () {
 			
@@ -90,7 +80,7 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 
 	public ExtCounterLocalService(CounterLocalService counterLocalService) {
 		super(counterLocalService);
- 	    createSchema();
+
  	    preparedStatements();
 		// TODO Auto-generated constructor stub
 	}
