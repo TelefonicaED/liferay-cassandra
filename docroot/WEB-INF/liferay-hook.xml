@@ -10,4 +10,16 @@
 			com.tls.hooks.cassandra.ExtSocialActivityLocalService
 		</service-impl>
 	</service>
+    <service>
+        <service-type>com.liferay.portlet.social.service.SocialRelationLocalService</service-type>
+        <service-impl>com.tls.hooks.cassandra.ExtSocialRelationLocalService</service-impl>
+    </service>
+    <service>
+        <service-type>com.liferay.portlet.social.service.SocialActivityCounterLocalService</service-type>
+        <service-impl>com.tls.hooks.cassandra.ExtSocialActivityCounterLocalService</service-impl>
+    </service>    
+    <service>
+        <service-type>com.liferay.counter.service.CounterLocalService</service-type>
+        <service-impl>com.tls.hooks.cassandra.ExtCounterLocalService</service-impl>
+    </service>     
 </hook>
