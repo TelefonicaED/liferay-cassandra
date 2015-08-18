@@ -27,10 +27,13 @@ import com.liferay.portlet.social.service.SocialRelationLocalServiceWrapper;
 
 public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWrapper {
 	
+/*
 	private static Cluster cluster;
 	private  Session session;
 	static String node="127.0.0.1";
+*/	
 	
+	Session session = ExtConexionCassandra.getSesion();
 	
 	PreparedStatement insertStatement;
 	
@@ -45,57 +48,14 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	PreparedStatement deleteActivityStatement;
 	
 	
-	   public Session getSession() 
-	   {
-	      return this.session;
-	   }
+
 	   public void createSchema() {
-		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
-		            "= {'class':'SimpleStrategy', 'replication_factor':1};");
-		      session.execute(
-		            "CREATE TABLE IF NOT EXISTS liferay.socialrelation (" +
-		                  "relationId bigint," + 
-		                  "companyId bigint," +
-		                  "createDate timestamp," +		                  
-		                  "userId1 bigint," + 
-		                  "userId2 bigint," +		                  
-		                  "type_ int," +
-		                  "PRIMARY KEY (relationId)" + 
-		                  ");");
-
-
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi7 on liferay.socialrelation (userId1);"
-		    		  );
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi8 on liferay.socialrelation (userId2);"
-		    		  );
 		      
 	   } 
-			   public void connect() 
-			   {
-				  
-				  if(cluster==null)
-				  {
-				      cluster = Cluster.builder()
-				            .addContactPoint(node)
-				            .build();
-				      Metadata metadata = cluster.getMetadata();
-				      System.out.printf("Connected to cluster: %s\n", 
-				            metadata.getClusterName());
-				      for ( Host host : metadata.getAllHosts() ) {
-				         System.out.printf("Datatacenter: %s; Host: %s; Rack: %s\n",
-				               host.getDatacenter(), host.getAddress(), host.getRack());
-				      }
-				      
-				      session = cluster.connect();
-				      createSchema();
-				      
-				      
-				      
 
-				     
-				     // INSERT  
+		private void preparedStatements () {	   
+	   
+	   				// INSERT  
 				  	 insertStatement = session.prepare(
 						      "INSERT INTO liferay.socialrelation " +
 						      "(relationId, companyid,createdate, userid1,userid2,type_)" +
@@ -131,7 +91,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			      
 
 				   
-			  }
+
 		      
    		  
 		      
@@ -140,7 +100,8 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	public ExtSocialRelationLocalService(
 			SocialRelationLocalService socialRelationLocalService) {
 		super(socialRelationLocalService);
-		connect();
+ 	//    createSchema();
+ 	    preparedStatements();
 		// TODO Auto-generated constructor stub
 	}
 	
