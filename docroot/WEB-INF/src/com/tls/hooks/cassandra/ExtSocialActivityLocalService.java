@@ -73,49 +73,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	PreparedStatement deleteActivityStatement;
 
 
-	   public void createSchema() {
-		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
-		            "= {'class':'SimpleStrategy', 'replication_factor':1};");
-		      session.execute(
-		            "CREATE TABLE IF NOT EXISTS liferay.socialactivity (" +
-		                  "activityId bigint," + 
-		                  "groupId bigint," + 
-		                  "companyId bigint," + 
-		                  "userId bigint," + 
-		                  "createDate timestamp," +
-		                  "mirrorActivityId bigint," +
-		                  "classNameId bigint," +
-		                  "classPK bigint," +
-		                  "type_ int," +
-		                  "extraData varchar," +
-		                  "receiverUserId bigint," +
-		                  "PRIMARY KEY (activityId,createDate)" + 
-		                  ") WITH CLUSTERING ORDER BY (createDate DESC);");
 
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi1 on liferay.socialactivity (classnameid);"
-		      );
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi2 on liferay.socialactivity (classpk);"
-		      );
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi3 on liferay.socialactivity (groupid);"
-		      );
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi4 on liferay.socialactivity (mirrorActivityId);"
-		      );
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi5 on liferay.socialactivity (receiverUserId);"
-		      );
-		      session.execute(
-			            "CREATE INDEX IF NOT EXISTS sagi6 on liferay.socialactivity (userId);"
-		      );
-		      
-		      
-		      
-		      
-		      
-		   }
 	   
 
 	      
@@ -190,7 +148,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	  
 	public ExtSocialActivityLocalService(SocialActivityLocalService socialActivityLocalService) {
 		super(socialActivityLocalService);
- 	    createSchema();
+ 	  //  createSchema();
  	    preparedStatements();
 	}
 	@Override
