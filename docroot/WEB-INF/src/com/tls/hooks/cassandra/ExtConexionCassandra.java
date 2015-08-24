@@ -15,7 +15,7 @@ public class ExtConexionCassandra {
 	public static  Session session;
 	static String node="127.0.0.1";
 	
-	
+	 
 	
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
