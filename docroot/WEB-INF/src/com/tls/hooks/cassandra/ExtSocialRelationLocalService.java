@@ -30,6 +30,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	
 	Session session = ExtConexionCassandra.session;
 	
+	
 	PreparedStatement insertStatement;
 	
 	PreparedStatement getRelationStatement;

@@ -53,10 +53,9 @@ import com.liferay.portlet.social.util.SocialCounterPeriodUtil;
 
 public class ExtSocialActivityCounterLocalService  extends SocialActivityCounterLocalServiceWrapper {
 
-	private static Cluster cluster;
+
 	Session session = ExtConexionCassandra.session;
-	static String node="127.0.0.1";
-	
+
 	
   	PreparedStatement getSocialActivityCounter;	
   	PreparedStatement getSocialActivityCounterId;

@@ -44,6 +44,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	static String node="127.0.0.1";
 */	
 	
+	
 	Session session = ExtConexionCassandra.session;
 	
   	PreparedStatement insertStatement;

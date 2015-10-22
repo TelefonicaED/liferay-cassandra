@@ -42,7 +42,6 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 	PreparedStatement getCountersCountStatement;	
 	PreparedStatement getNamesStatement;
 	
-	
 	   
 		private void preparedStatements () {
 			

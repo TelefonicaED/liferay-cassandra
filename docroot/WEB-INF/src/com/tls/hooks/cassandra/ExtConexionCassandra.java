@@ -13,7 +13,6 @@ public class ExtConexionCassandra {
 
 	static String node="127.0.0.1";
 	//static String node="10.102.227.59";
-	
 	public  static   Session session =getSesion(); 	
 
 	
