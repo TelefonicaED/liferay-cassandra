@@ -6,8 +6,9 @@ import java.util.List;
 
 
 
-import com.datastax.driver.core.BoundStatement;
 
+
+import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
@@ -43,7 +44,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	static String node="127.0.0.1";
 */	
 	
-	Session session = ExtConexionCassandra.getSesion();
+	Session session = ExtConexionCassandra.session;
 	
   	PreparedStatement insertStatement;
 	PreparedStatement getGroupActivitiesStatement;
@@ -160,7 +161,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	}
 	@Override
 	public SocialActivity createSocialActivity(long activityId) {
-		System.out.println("createSocialActivity");
+	
 
 		return super.createSocialActivity(activityId);
 	}
@@ -223,7 +224,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public void addActivity(long userId, long groupId, Date createDate,
 			String className, long classPK, int type, String extraData,
 			long receiverUserId) throws PortalException, SystemException {
-		System.out.println("addActivity1");
+	
 		
 	 	
 		
@@ -296,7 +297,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 			long classPK, int type, String extraData, long receiverUserId)
 			throws PortalException, SystemException {
 		// TODO Auto-generated method stub
-		System.out.println("addActivity2");
+
 		
 		Date createDate=new Date(System.currentTimeMillis());
 	    this.addActivity(userId, groupId, createDate, className, classPK, type, extraData, receiverUserId);
@@ -305,7 +306,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public void addActivity(SocialActivity activity,
 			SocialActivity mirrorActivity) throws PortalException,
 			SystemException {
-		System.out.println("addActivity3");
+	
 		
 		// TODO Auto-generated method stub
 		if (ImportExportThreadLocal.isImportInProcess()) {

@@ -3,17 +3,15 @@ package com.tls.hooks.cassandra;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.beanutils.PropertyUtils;
+
+
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.DataType;
 import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
@@ -24,7 +22,6 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.transaction.Propagation;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.PropertiesUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -46,20 +43,18 @@ import com.liferay.portlet.social.model.SocialActivityCounterDefinition;
 import com.liferay.portlet.social.model.SocialActivityDefinition;
 import com.liferay.portlet.social.model.SocialActivityLimit;
 import com.liferay.portlet.social.model.SocialActivityProcessor;
-import com.liferay.portlet.social.service.SocialActivityAchievementLocalService;
 import com.liferay.portlet.social.service.SocialActivityCounterLocalService;
 import com.liferay.portlet.social.service.SocialActivityCounterLocalServiceUtil;
 import com.liferay.portlet.social.service.SocialActivityCounterLocalServiceWrapper;
 import com.liferay.portlet.social.service.SocialActivityLimitLocalServiceUtil;
 import com.liferay.portlet.social.service.SocialActivitySettingLocalServiceUtil;
-import com.liferay.portlet.social.service.SocialActivitySettingServiceUtil;
 import com.liferay.portlet.social.service.persistence.SocialActivityLimitUtil;
 import com.liferay.portlet.social.util.SocialCounterPeriodUtil;
 
 public class ExtSocialActivityCounterLocalService  extends SocialActivityCounterLocalServiceWrapper {
 
 	private static Cluster cluster;
-	Session session = ExtConexionCassandra.getSesion();
+	Session session = ExtConexionCassandra.session;
 	static String node="127.0.0.1";
 	
 	
@@ -482,7 +477,7 @@ public class ExtSocialActivityCounterLocalService  extends SocialActivityCounter
 			com.liferay.portlet.social.model.SocialActivity activity)
 			throws com.liferay.portal.kernel.exception.PortalException,
 				com.liferay.portal.kernel.exception.SystemException {
-			System.out.println("addActivityCounters");
+
 			
 			  
 			if (!SocialActivitySettingLocalServiceUtil.isEnabled(

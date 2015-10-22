@@ -5,19 +5,14 @@ import java.util.Date;
 import java.util.List;
 
 import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Host;
-import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 import com.liferay.counter.service.CounterLocalServiceUtil;
-
 import com.liferay.portal.PortalException;
 import com.liferay.portal.SystemException;
 import com.liferay.portal.model.User;
-import com.liferay.portal.service.CompanyLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
 import com.liferay.portlet.social.RelationUserIdException;
 import com.liferay.portlet.social.model.SocialRelation;
@@ -33,7 +28,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 	static String node="127.0.0.1";
 */	
 	
-	Session session = ExtConexionCassandra.getSesion();
+	Session session = ExtConexionCassandra.session;
 	
 	PreparedStatement insertStatement;
 	

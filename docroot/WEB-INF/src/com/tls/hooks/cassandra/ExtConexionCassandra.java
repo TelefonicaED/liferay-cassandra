@@ -1,31 +1,23 @@
 package com.tls.hooks.cassandra;
 
-import com.datastax.driver.core.BoundStatement;
+
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
 
 public class ExtConexionCassandra {
 
-	private static Cluster cluster;
-	public static  Session session;
+	private static  Cluster cluster;
+
 	static String node="127.0.0.1";
-	
-	 
-	
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-		
+	//static String node="10.102.227.59";
+	public  static   Session session =getSesion(); 	
 
-
-	}
 	
 	
-	   public static void createSchema() {
+	   private static  void createSchema() {
 		   
 
 		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
@@ -52,8 +44,7 @@ public class ExtConexionCassandra {
 		   
 		   
 		   
-		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
-		            "= {'class':'SimpleStrategy', 'replication_factor':1};");
+
 		      session.execute(
 		            "CREATE TABLE IF NOT EXISTS liferay.socialactivity (" +
 		                  "activityId bigint," + 
@@ -89,9 +80,7 @@ public class ExtConexionCassandra {
 			            "CREATE INDEX IF NOT EXISTS sagi6 on liferay.socialactivity (userId);"
 		      );
 		      
-		      
-		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 	
-			            "= {'class':'SimpleStrategy', 'replication_factor':1};");
+
 			      session.execute(
 			            "CREATE TABLE IF NOT EXISTS liferay.socialactivitycounter (" +
 			                  "activityCounterId bigint," + 
@@ -133,8 +122,7 @@ public class ExtConexionCassandra {
 			      );
 		      
 		      
-			      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
-				            "= {'class':'SimpleStrategy', 'replication_factor':1};");
+
 				      session.execute(
 				            "CREATE TABLE IF NOT EXISTS liferay.counter (" +
 				                  "name varchar," +
@@ -143,12 +131,25 @@ public class ExtConexionCassandra {
 				                  ") ;");
 
 				      
-				      
+				      session.execute(
+					            "CREATE TABLE IF NOT EXISTS liferay.auditentry (" +
+					                  "auditId bigint," + 
+					                  "auditDate timestamp," +
+					                  "companyId bigint," +		                  
+					                  "groupId bigint," + 
+					                  "userId bigint," +		                  
+					                  "classname varchar," +
+					                  "action varchar," +
+					                  "extraData varchar," +
+					                  "classPK bigint," +					                  
+					                  "association bigint," +					                  
+					                  "PRIMARY KEY (auditId)" + 
+					                  ");");				      
 		      
 		   }	
 	
 
-	   public static void connect() 
+	   private static  void connect() 
 	   {
 		  
 		  if(cluster==null)
@@ -166,7 +167,7 @@ public class ExtConexionCassandra {
 		      
 		      session = cluster.connect();
 		      
-		      
+	
 		      
 		      
 		      
@@ -174,12 +175,12 @@ public class ExtConexionCassandra {
 		   
 	  }
 
-	public static Session getSesion() {
-		// TODO Auto-generated method stub
-		connect();
-		createSchema();
-		 return session;
-	}
+	   private static  Session getSesion() {
+			// TODO Auto-generated method stub
+			connect();
+		    createSchema();			
+	    	return session;
+		}
 
 
 }
