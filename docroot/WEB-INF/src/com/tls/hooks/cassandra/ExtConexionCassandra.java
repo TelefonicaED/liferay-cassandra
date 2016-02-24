@@ -11,8 +11,8 @@ public class ExtConexionCassandra {
 
 	private static  Cluster cluster;
 
-	static String node="127.0.0.1";
-	//static String node="10.102.227.59";
+	//static String node="127.0.0.1";
+	static String node="10.102.225.54";
 	public  static   Session session =getSesion(); 	
 
 	
@@ -21,7 +21,7 @@ public class ExtConexionCassandra {
 		   
 
 		      session.execute("CREATE KEYSPACE IF NOT EXISTS liferay WITH replication " + 
-			            "= {'class':'SimpleStrategy', 'replication_factor':1};");
+			            "= {'class':'SimpleStrategy', 'replication_factor':3};");
 			      session.execute(
 			            "CREATE TABLE IF NOT EXISTS liferay.socialrelation (" +
 			                  "relationId bigint," + 
@@ -131,20 +131,7 @@ public class ExtConexionCassandra {
 				                  ") ;");
 
 				      
-				      session.execute(
-					            "CREATE TABLE IF NOT EXISTS liferay.auditentry (" +
-					                  "auditId bigint," + 
-					                  "auditDate timestamp," +
-					                  "companyId bigint," +		                  
-					                  "groupId bigint," + 
-					                  "userId bigint," +		                  
-					                  "classname varchar," +
-					                  "action varchar," +
-					                  "extraData varchar," +
-					                  "classPK bigint," +					                  
-					                  "association bigint," +					                  
-					                  "PRIMARY KEY (auditId)" + 
-					                  ");");				      
+			      
 		      
 		   }	
 	
@@ -157,20 +144,17 @@ public class ExtConexionCassandra {
 		      cluster = Cluster.builder()
 		            .addContactPoint(node)
 		            .build();
-		      Metadata metadata = cluster.getMetadata();
-		      System.out.printf("Connected to cluster: %s\n", 
-		            metadata.getClusterName());
+		      
+
+	    	  Metadata metadata = cluster.getMetadata();
+	    	  System.out.printf("Connected to cluster: %s\n",metadata.getClusterName());
+			     		      
+		     
 		      for ( Host host : metadata.getAllHosts() ) {
 		         System.out.printf("Datatacenter: %s; Host: %s; Rack: %s\n",
 		               host.getDatacenter(), host.getAddress(), host.getRack());
 		      }
-		      
 		      session = cluster.connect();
-		      
-	
-		      
-		      
-		      
 		  }
 		   
 	  }

@@ -5,8 +5,12 @@ import java.util.List;
 import com.liferay.counter.NoSuchCounterException;
 import com.liferay.counter.model.Counter;
 import com.liferay.counter.service.CounterLocalService;
+import com.liferay.counter.service.CounterLocalServiceUtil;
 import com.liferay.counter.service.CounterLocalServiceWrapper;
 import com.liferay.portal.kernel.concurrent.CompeteLatch;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQueryFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.CharPool;
@@ -18,14 +22,12 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.shaded.netty.util.internal.ConcurrentHashMap;
-
-
 
 
 import com.liferay.counter.model.*;
 
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 
@@ -555,7 +557,7 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 					counterRegister = _counterRegisterMap.get(name);
 
 					if (counterRegister == null) {
-						counterRegister = createCounterRegister(name);
+					 counterRegister = createCounterRegister(name);
 
 						_counterRegisterMap.put(name, counterRegister);
 					}
@@ -616,7 +618,7 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 */			
 			try {
 
-				
+/*				
 				long contador=0;
 				BoundStatement boundStatement = new BoundStatement(addCounterStatement);			
 				ResultSet results=session.execute(boundStatement.bind(size,name));
@@ -626,14 +628,17 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 			    List<Row> rows=results.all();
 				Row row=rows.get(0);
 				contador = row.getLong(1);
-				
+*/				
 				
 				//Comprobacion si existe el contador para la clase en Liferay
-/*				
+				
 				DynamicQuery query = DynamicQueryFactoryUtil.forClass(Counter.class)
 						.add(PropertyFactoryUtil.forName("name").eq(name));
-			    List  lista=  CounterLocalServiceUtil.dynamicQuery(query);		
-    		    Counter counter = (Counter) lista.get(0);
+			    List  lista=  CounterLocalServiceUtil.dynamicQuery(query);	
+			    Counter counter =null;
+			    if (!lista.isEmpty()){
+    		     counter = (Counter) lista.get(0);
+			    }
 			    long contador=0;
 			    if (counter == null) { //No existe en Counter
 			    	BoundStatement boundStatement = new BoundStatement(addCounterStatement);
@@ -663,7 +668,7 @@ public class ExtCounterLocalService extends CounterLocalServiceWrapper {
 			    }
 				
 		
-*/
+
 				
 				
 				

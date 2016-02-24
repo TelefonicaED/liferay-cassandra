@@ -380,7 +380,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public void addUniqueActivity(long userId, long groupId, Date createDate,
 			String className, long classPK, int type, String extraData,
 			long receiverUserId) throws PortalException, SystemException {
-		System.out.println("addUniqueActivity");
+		System.out.println("addUniqueActivity1");
 		
 		super.addUniqueActivity(userId, groupId, createDate, className, classPK, type,
 				extraData, receiverUserId);
@@ -389,7 +389,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	public void addUniqueActivity(long userId, long groupId, String className,
 			long classPK, int type, String extraData, long receiverUserId)
 			throws PortalException, SystemException {
-		System.out.println("addUniqueActivity");
+		System.out.println("addUniqueActivity2");
 		
 		super.addUniqueActivity(userId, groupId, className, classPK, type, extraData,
 				receiverUserId);
@@ -628,7 +628,6 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		if(results!=null )		
 		{
 			List<Row> rowlist=results.all();
-			System.out.println(rowlist.size());
 			if(rowlist.size()>0){
 				Row row=rowlist.get(0);
 				SocialActivity socialActivity = getSocialActivityFromRow(row);
@@ -668,7 +667,10 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 		}
 		socialActivity.setClassPK(row.getLong("classpk"));
 		socialActivity.setCompanyId(row.getLong("companyid"));
+		
+
 		socialActivity.setCreateDate(row.getDate("createdate").getTime());
+		
 		socialActivity.setExtraData(row.getString("extradata"));
 		socialActivity.setGroupId(row.getLong("groupid"));
 		socialActivity.setMirrorActivityId(row.getLong("mirroractivityid"));
@@ -903,7 +905,7 @@ public class ExtSocialActivityLocalService extends SocialActivityLocalServiceWra
 	@Override
 	public List<SocialActivity> getRelationActivities(long userId, int start,
 			int end) throws SystemException {
-		System.out.println("getRelationActivities");
+
 		
 		 
 		

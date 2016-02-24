@@ -576,7 +576,6 @@ public class ExtSocialActivityCounterLocalService  extends SocialActivityCounter
 				ResultSet results=session.execute(boundStatement.bind(previousActivityCounterId));
 				if(results!=null ){
 					List<Row> rowlist=results.all();
-					System.out.println(rowlist.size());
 					if(rowlist.size()>0){
 						Row row=rowlist.get(0);
 						activityCounter = getSocialActivityCounterFromRow(row);
@@ -587,7 +586,7 @@ public class ExtSocialActivityCounterLocalService  extends SocialActivityCounter
 				results=session.execute(boundStatement.bind(previousActivityCounterId));
 				if(results!=null ){
 					List<Row> rowlist=results.all();
-					System.out.println(rowlist.size());
+
 					if(rowlist.size()>0){
 						Row row=rowlist.get(0);
 						activityCounter_Counter = getSocialActivityCounter_CounterFromRow(row);
@@ -636,7 +635,7 @@ public class ExtSocialActivityCounterLocalService  extends SocialActivityCounter
 			if(results!=null )		
 			{
 				List<Row> rowlist=results.all();
-				System.out.println(rowlist.size());
+
 				if(rowlist.size()>0){
 					Row row=rowlist.get(0);
 					activityCounter = getSocialActivityCounterFromRow(row);
@@ -650,7 +649,7 @@ public class ExtSocialActivityCounterLocalService  extends SocialActivityCounter
     			if(results!=null )		
     			{
     				List<Row> rowlist=results.all();
-    				System.out.println(rowlist.size());
+
     				if(rowlist.size()>0){
     					Row row=rowlist.get(0);
     					activityCounterAux1_counter = getSocialActivityCounter_CounterFromRow(row);

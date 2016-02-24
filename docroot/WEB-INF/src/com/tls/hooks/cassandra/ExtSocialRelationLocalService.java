@@ -154,7 +154,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			if(results!=null )		
 			{
 				List<Row> rowlist=results.all();
-				System.out.println(rowlist.size());
+				
 				if(rowlist.size()>0){
 					Row row=rowlist.get(0);
 					relation = getSocialRelationFromRow(row);
@@ -415,7 +415,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			if(results!=null )		
 			{
 				List<Row> rowlist=results.all();
-				System.out.println(rowlist.size());
+
 				if(rowlist.size()>0){
 					Row row=rowlist.get(0);
 					socialrelation = getSocialRelationFromRow(row);
@@ -462,7 +462,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 						if(results!=null )		
 						{
 							List<Row> rowlist=results.all();
-							System.out.println(rowlist.size());
+
 							if(rowlist.size()>0){
 								Row row=rowlist.get(0);
 								biRelation = getSocialRelationFromRow(row);
@@ -538,7 +538,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			if(results!=null )		
 			{
 				List<Row> rowlist=results.all();
-				System.out.println(rowlist.size());
+
 				if(rowlist.size()>0){
 					Row row=rowlist.get(0);
 					boundStatement = new BoundStatement(deleteActivityStatement);
@@ -553,7 +553,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			if(results!=null )		
 			{
 				List<Row> rowlist=results.all();
-				System.out.println(rowlist.size());
+
 				if(rowlist.size()>0){
 					Row row=rowlist.get(0);
 					boundStatement = new BoundStatement(deleteActivityStatement);
@@ -748,7 +748,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			if(results!=null )		
 			{
 				List<Row> rowlist=results.all();
-				System.out.println(rowlist.size());
+				
 				if(rowlist.size()>0){
 					Row row=rowlist.get(0);
 					SocialRelation socialrelation = getSocialRelationFromRow(row);
@@ -786,7 +786,7 @@ public class ExtSocialRelationLocalService extends	SocialRelationLocalServiceWra
 			if(results!=null )		
 			{
 				List<Row> rowlist=results.all();
-				System.out.println(rowlist.size());
+
 				if(rowlist.size()>0){
 					Row row=rowlist.get(0);
 					socialrelation = getSocialRelationFromRow(row);
