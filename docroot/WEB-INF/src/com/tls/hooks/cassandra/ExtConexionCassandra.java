@@ -6,13 +6,13 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.Metadata;
 import com.datastax.driver.core.Session;
+import com.liferay.portal.kernel.util.PropsUtil;
 
 public class ExtConexionCassandra {
 
 	private static  Cluster cluster;
 
-	//static String node="127.0.0.1";
-	static String node="10.102.225.54";
+	static String node=PropsUtil.get("HostCassandra");
 	public  static   Session session =getSesion(); 	
 
 	
